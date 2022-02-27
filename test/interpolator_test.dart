@@ -6,7 +6,6 @@ import 'package:i18next/interpolator.dart';
 
 void main() {
   const baseOptions = I18NextOptions.base;
-  const defaultFormatter = I18NextOptions.defaultFormatter;
   const defaultLocale = Locale('en');
 
   group('interpolate', () {

@@ -6,6 +6,7 @@
   * The final result is still the same, if either interpolation or nesting fails, the translator will fallback to null,
     which in turn is converted back into the original key.
   * Also, json deserialization issues on `nesting` now fail, rather than silently recovering
+* Fixes immediate key recursion after nesting
 
 ## [0.5.2]
 
