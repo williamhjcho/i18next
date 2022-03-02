@@ -106,16 +106,26 @@ class Translator {
     Map<String, dynamic> variables,
     I18NextOptions options,
   ) {
-    final value = resourceStore.retrieve(locale, namespace, key, options);
-    String? result;
-    if (value != null) {
-      result = interpolator.interpolate(locale, value, variables, options);
-      result = interpolator.nest(
+    var result = resourceStore.retrieve(locale, namespace, key, options);
+    try {
+      if (result != null) {
+        result = interpolator.interpolate(locale, result, variables, options);
+        result = interpolator.nest(
           locale,
           result,
-          Translator(pluralResolver, resourceStore, namespace),
+          (currentKey, locale, variables, options) {
+            // nesting a potentially recursive key
+            if (currentKey == key) return null;
+
+            return Translator(pluralResolver, resourceStore, namespace)
+                .call(currentKey, locale, variables, options);
+          },
           variables,
-          options);
+          options,
+        );
+      }
+    } catch (error) {
+      result = null;
     }
     return result;
   }

@@ -121,7 +121,7 @@ void main() {
 
       expect(
         i18next.t('$namespace:key', variables: {'name': 'World'}),
-        'leading {{value, format}} trailing',
+        '$namespace:key',
       );
     });
 
@@ -469,27 +469,27 @@ void main() {
 
     test('given empty interpolation', () {
       mockKey('key', 'This is some {{}}');
-      expect(i18next.t('$namespace:key'), 'This is some {{}}');
+      expect(i18next.t('$namespace:key'), '$namespace:key');
     });
 
     test('given non matching arguments', () {
       expect(
         i18next.t('$namespace:key', variables: {'none': 'none'}),
-        '{{first}}, {{second}}, and then {{third}}!',
+        '$namespace:key',
       );
     });
 
     test('given partially matching arguments', () {
       expect(
         i18next.t('$namespace:key', variables: {'first': 'fst'}),
-        'fst, {{second}}, and then {{third}}!',
+        '$namespace:key',
       );
       expect(
         i18next.t(
           '$namespace:key',
           variables: {'first': 'fst', 'third': 'trd'},
         ),
-        'fst, {{second}}, and then trd!',
+        '$namespace:key',
       );
     });
 
@@ -521,7 +521,7 @@ void main() {
     test('when nested key is not found', () {
       mockKey('key', r'This is my $t(anotherKey)');
 
-      expect(i18next.t('$namespace:key'), r'This is my $t(anotherKey)');
+      expect(i18next.t('$namespace:key'), '$namespace:key');
     });
 
     test('given multiple simple key substitutions', () {
