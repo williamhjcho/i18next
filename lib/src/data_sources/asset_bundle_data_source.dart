@@ -12,6 +12,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   AssetBundleLocalizationDataSource({
     this.bundlePath = 'localizations',
     AssetBundle? bundle,
+    this.cache = true,
   })  : bundle = bundle ?? rootBundle,
         super();
 
@@ -24,6 +25,8 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   ///
   /// Defaults no [rootBundle].
   final AssetBundle bundle;
+
+  final bool cache;
 
   /// Loads all '.json' localization files declared in [manifest] with
   /// [bundlePath] given a [locale]. The assets themselves must have been
@@ -54,7 +57,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
     assert(manifest.isNotEmpty);
 
     final assetFiles = await bundle
-        .loadString(manifest)
+        .loadString(manifest, cache: cache)
         .then<Map<String, dynamic>>((string) => json.decode(string))
         .then((map) => map.keys);
 
@@ -80,7 +83,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
     for (final file in files) {
       // TODO: make this a lazy eval and let loading be handed concurrently?
       final namespace = path.basenameWithoutExtension(file);
-      final string = await bundle.loadString(file);
+      final string = await bundle.loadString(file, cache: cache);
       namespaces[namespace] = jsonDecode(string);
     }
     return namespaces;
@@ -92,11 +95,13 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
       other is AssetBundleLocalizationDataSource &&
           runtimeType == other.runtimeType &&
           bundlePath == other.bundlePath &&
+          cache == other.cache &&
           bundle == other.bundle;
 
   @override
   int get hashCode => hashValues(
         bundlePath,
         bundle,
+        cache,
       );
 }
