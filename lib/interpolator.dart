@@ -5,11 +5,35 @@ import 'src/options.dart';
 import 'utils.dart';
 
 typedef Translate = String? Function(
-  String,
-  Locale,
-  Map<String, dynamic>,
-  I18NextOptions,
+  String key,
+  Locale locale,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
 );
+
+/// Exception thrown when the [interpolate] fails while processing
+/// for either not containing a variable or with malformed or
+/// incoherent evaluations.
+class InterpolationException implements Exception {
+  InterpolationException(this.message, this.match);
+
+  final String message;
+  final Match match;
+
+  @override
+  String toString() => 'InterpolationException: $message in "${match[0]}"';
+}
+
+/// Exception thrown when the [nest] fails while processing
+class NestingException implements Exception {
+  NestingException(this.message, this.match);
+
+  final String message;
+  final Match match;
+
+  @override
+  String toString() => 'NestingException: $message in "${match[0]}"';
+}
 
 /// Replaces occurrences of matches in [string] for the named values
 /// in [options] (if they exist), by first passing through the
@@ -32,28 +56,26 @@ String interpolate(
   final pattern = interpolationPattern(options);
   final keySeparator = options.keySeparator ?? '.';
 
-  return string.splitMapJoin(
-    pattern,
-    onMatch: (match) {
-      final regExpMatch = match as RegExpMatch;
-      final variable = regExpMatch.namedGroup('variable');
+  return string.splitMapJoin(pattern, onMatch: (match) {
+    match = match as RegExpMatch;
+    final variable = match.namedGroup('variable')?.trim();
+    if (variable == null || variable.isEmpty) {
+      throw InterpolationException('Missing variable', match);
+    }
 
-      String? result;
-      if (variable != null) {
-        final path = variable.split(keySeparator);
-        final value = evaluate(path, variables);
-        // TODO: throw error or fallback behavior on options here?
-        if (value != null) {
-          final formatter = options.formatter;
-          if (formatter != null) {
-            final format = regExpMatch.namedGroup('format');
-            result = formatter(value, format, locale);
-          }
-        }
-      }
-      return result ?? regExpMatch.group(0)!;
-    },
-  );
+    final path = variable.split(keySeparator);
+    final value = evaluate(path, variables);
+    if (value == null) {
+      throw InterpolationException('Could not evaluate variable', match);
+    }
+
+    final formatter = options.formatter;
+    if (formatter != null) {
+      final format = match.namedGroup('format');
+      return formatter(value, format, locale);
+    }
+    return value.toString();
+  });
 }
 
 /// Replaces occurrences of nested key-values in [string] for other
@@ -76,26 +98,24 @@ String nest(
 ) {
   final pattern = nestingPattern(options);
   return string.splitMapJoin(pattern, onMatch: (match) {
-    final regExpMatch = match as RegExpMatch;
-    final key = regExpMatch.namedGroup('key');
-
-    String? result;
-    if (key != null && key.isNotEmpty) {
-      final newVariables = Map<String, dynamic>.of(variables);
-      final varsString = regExpMatch.namedGroup('variables');
-      if (varsString != null && varsString.isNotEmpty) {
-        try {
-          final Map<String, dynamic> decoded = jsonDecode(varsString);
-          newVariables.addAll(decoded);
-        } catch (error) {
-          // TODO: throw/fallback nesting failure(s)?
-          assert(true, error);
-        }
-      }
-
-      result = translate(key, locale, newVariables, options);
+    match = match as RegExpMatch;
+    final key = match.namedGroup('key');
+    if (key == null || key.isEmpty) {
+      throw NestingException('Key not found', match);
     }
-    return result ?? regExpMatch.group(0)!;
+
+    var newVariables = variables;
+    final varsString = match.namedGroup('variables');
+    if (varsString != null && varsString.isNotEmpty) {
+      final Map<String, dynamic> decoded = jsonDecode(varsString);
+      newVariables = Map<String, dynamic>.of(variables)..addAll(decoded);
+    }
+
+    final value = translate(key, locale, newVariables, options);
+    if (value == null) {
+      throw NestingException('Translation not found', match);
+    }
+    return value;
   });
 }
 
