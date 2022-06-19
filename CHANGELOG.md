@@ -1,3 +1,7 @@
+# [Next version]
+
+* Adds `AssetBundleLocalizationDataSource.cache` property (default is still true)
+
 ## [0.5.2]
 
 * Fix: Unnecessary reloads of the localizationDataSource
