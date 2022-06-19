@@ -7,6 +7,7 @@
     which in turn is converted back into the original key.
   * Also, json deserialization issues on `nesting` now fail, rather than silently recovering
 * Fixes immediate key recursion after nesting
+* Moves `I18NextOptions.defaultFormatter` as an internal `interpolator.dart` method.
 
 ## [0.5.2]
 

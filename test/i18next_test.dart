@@ -10,7 +10,6 @@ import 'i18next_localization_delegate_test.mocks.dart';
 void main() {
   const namespace = 'local_namespace';
   const locale = Locale('en');
-  const defaultFormatter = I18NextOptions.defaultFormatter;
 
   late I18Next i18next;
   late MockResourceStore resourceStore;
@@ -98,7 +97,7 @@ void main() {
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3(defaultFormatter, count: 0),
+          formatter: expectAsync3((_, __, ___) => fail(''), count: 0),
         ),
       );
       mockKey('key', 'no interpolations here');

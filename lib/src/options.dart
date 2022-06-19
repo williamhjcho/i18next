@@ -39,7 +39,7 @@ class I18NextOptions with Diagnosticable {
     nestingSuffix: ')',
     nestingSeparator: ',',
     pluralSuffix: 'plural',
-    formatter: defaultFormatter,
+    formatter: null,
   );
 
   /// The namespaces used to fallback to when no key matches were found on the
@@ -237,8 +237,4 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('pluralSuffix', pluralSuffix))
       ..add(StringProperty('formatter', formatter?.toString()));
   }
-
-  /// Simply returns [value] in string form. Ignores [format] and [locale].
-  static String defaultFormatter(Object value, String? format, Locale locale) =>
-      value.toString();
 }
