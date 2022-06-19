@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:meta/meta.dart';
+
 import 'src/options.dart';
 import 'utils.dart';
 
@@ -69,14 +71,20 @@ String interpolate(
       throw InterpolationException('Could not evaluate variable', match);
     }
 
-    final formatter = options.formatter;
-    if (formatter != null) {
-      final format = match.namedGroup('format');
-      return formatter(value, format, locale);
-    }
-    return value.toString();
+    final formatter = options.formatter ?? interpolatorDefaultFormatter;
+    final format = match.namedGroup('format');
+    return formatter(value, format, locale);
   });
 }
+
+/// Simply returns [value] in string form. Ignores [format] and [locale].
+@visibleForTesting
+String interpolatorDefaultFormatter(
+  Object value,
+  String? format,
+  Locale locale,
+) =>
+    value.toString();
 
 /// Replaces occurrences of nested key-values in [string] for other
 /// key-values. Essentially calls [I18Next.translate] with the nested value.

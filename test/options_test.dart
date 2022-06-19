@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:i18next/interpolator.dart';
 import 'package:i18next/src/options.dart';
 
 void main() {
@@ -34,13 +35,15 @@ void main() {
     expect(base.nestingSuffix, ')');
     expect(base.nestingSeparator, ',');
     expect(base.pluralSuffix, 'plural');
-    expect(base.formatter, I18NextOptions.defaultFormatter);
+    expect(base.formatter, isNull);
+    expect(base.missingKeyHandler, isNull);
+    expect(base.translationFailedHandler, isNull);
   });
 
   test('.defaultFormatter', () {
     const format = 'format';
     const locale = Locale('en');
-    const formatter = I18NextOptions.defaultFormatter;
+    const formatter = interpolatorDefaultFormatter;
 
     expect(formatter('My value', format, locale), 'My value');
     expect(formatter(9876.1234, format, locale), '9876.1234');

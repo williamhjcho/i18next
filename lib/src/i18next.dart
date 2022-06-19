@@ -87,10 +87,13 @@ class I18Next {
     locale ??= this.locale;
     final newOptions = this.options.merge(options);
 
-    // TODO: when translator fails, allow a fallback behavior (null or throw)
-    return Translator(pluralResolver, resourceStore)
-            .call(key, locale, variables, newOptions) ??
-        key;
+    var result = Translator(pluralResolver, resourceStore)
+        .call(key, locale, variables, newOptions);
+    if (result == null && newOptions.missingKeyHandler != null) {
+      result =
+          newOptions.missingKeyHandler!(locale, key, variables, newOptions);
+    }
+    return result ?? key;
   }
 
   /// Returns the localized [I18Next] in the widget tree that corresponds to

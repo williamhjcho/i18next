@@ -10,7 +10,6 @@ import 'i18next_localization_delegate_test.mocks.dart';
 void main() {
   const namespace = 'local_namespace';
   const locale = Locale('en');
-  const defaultFormatter = I18NextOptions.defaultFormatter;
 
   late I18Next i18next;
   late MockResourceStore resourceStore;
@@ -74,9 +73,22 @@ void main() {
     expect(i18next.t('$namespace:myKey'), 'This is my key');
   });
 
-  test('given a non-existing or non matching key', () {
-    expect(i18next.t('someKey'), 'someKey');
-    expect(i18next.t('some.key'), 'some.key');
+  group('given a non-existing or non matching key', () {
+    test('with the default missingKeyHandler', () {
+      expect(i18next.t('someKey'), 'someKey');
+      expect(i18next.t('some.key'), 'some.key');
+    });
+
+    test('with a custom missingKeyHandler', () {
+      const fallbackText = 'Fallback Text';
+      final options = I18NextOptions(
+        missingKeyHandler: expectAsync4(
+          (locale, key, variables, options) => fallbackText,
+          count: 1,
+        ),
+      );
+      expect(i18next.t('someKey', options: options), fallbackText);
+    });
   });
 
   test('given overriding locale', () {
@@ -98,7 +110,7 @@ void main() {
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3(defaultFormatter, count: 0),
+          formatter: expectAsync3((_, __, ___) => fail(''), count: 0),
         ),
       );
       mockKey('key', 'no interpolations here');
@@ -515,6 +527,20 @@ void main() {
         'fst, snd, and then trd!',
       );
     });
+
+    test(
+      'given a failing interpolation with custom translationFailedHandler',
+      () {
+        const fallbackText = 'Fallback Text';
+        final options = I18NextOptions(
+          translationFailedHandler: expectAsync6(
+            (locale, namespace, key, variables, options, error) => fallbackText,
+            count: 1,
+          ),
+        );
+        expect(i18next.t('$namespace:key', options: options), fallbackText);
+      },
+    );
   });
 
   group('nesting', () {
@@ -622,6 +648,21 @@ void main() {
         mockKey('key', r'My key is $t(key, {"context": "ctx"})!');
 
         expect(i18next.t('$namespace:key'), '$namespace:key');
+      },
+    );
+
+    test(
+      'given a failing nesting with custom translationFailedHandler',
+      () {
+        mockKey('key', r'This is my $t(anotherKey)');
+        const fallbackText = 'Fallback Text';
+        final options = I18NextOptions(
+          translationFailedHandler: expectAsync6(
+            (locale, namespace, key, variables, options, error) => fallbackText,
+            count: 1,
+          ),
+        );
+        expect(i18next.t('$namespace:key', options: options), fallbackText);
       },
     );
   });

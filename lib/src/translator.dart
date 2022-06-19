@@ -30,7 +30,8 @@ class Translator {
       namespace = key.substring(0, match.start);
       keyPath = key.substring(match.end);
     }
-    return translateKey(locale, namespace ?? '', keyPath, variables, options);
+    namespace ??= '';
+    return translateKey(locale, namespace, keyPath, variables, options);
   }
 
   /// Order of key resolution:
@@ -82,14 +83,26 @@ class Translator {
 
     for (final currentNamespace in namespaces) {
       for (final currentKey in keys.reversed) {
-        final found = find(
-          locale,
-          currentNamespace,
-          currentKey,
-          variables,
-          options,
-        );
-        if (found != null) return found;
+        // TODO: translation context object
+        try {
+          final found = find(
+            locale,
+            currentNamespace,
+            currentKey,
+            variables,
+            options,
+          );
+          if (found != null) return found;
+        } catch (error) {
+          return options.translationFailedHandler?.call(
+            locale,
+            currentNamespace,
+            currentKey,
+            variables,
+            options,
+            error,
+          );
+        }
       }
     }
     return null;
@@ -107,28 +120,24 @@ class Translator {
     I18NextOptions options,
   ) {
     var result = resourceStore.retrieve(locale, namespace, key, options);
-    try {
-      if (result != null) {
-        result = interpolator.interpolate(locale, result, variables, options);
-        result = interpolator.nest(
-          locale,
-          result,
-          (currentKey, locale, newVariables, options) {
-            // nesting a potentially recursive key
-            if (currentKey == key &&
-                newVariables['context'] == variables['context']) {
-              return null;
-            }
+    if (result != null) {
+      result = interpolator.interpolate(locale, result, variables, options);
+      result = interpolator.nest(
+        locale,
+        result,
+        (currentKey, locale, newVariables, options) {
+          // nesting a potentially recursive key
+          if (currentKey == key &&
+              newVariables['context'] == variables['context']) {
+            return null;
+          }
 
-            return Translator(pluralResolver, resourceStore, namespace)
-                .call(currentKey, locale, newVariables, options);
-          },
-          variables,
-          options,
-        );
-      }
-    } catch (error) {
-      result = null;
+          return Translator(pluralResolver, resourceStore, namespace)
+              .call(currentKey, locale, newVariables, options);
+        },
+        variables,
+        options,
+      );
     }
     return result;
   }
