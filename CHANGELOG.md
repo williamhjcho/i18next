@@ -8,6 +8,8 @@
   * Also, json deserialization issues on `nesting` now fail, rather than silently recovering
 * Fixes immediate key recursion after nesting
 * Moves `I18NextOptions.defaultFormatter` as an internal `interpolator.dart` method.
+* Adds `MissingKeyHandler` and `TranslationFailedHandler` on `I18NextOptions` to allow custom handling if needed
+  (default behavior is to return the key itself).
 
 ## [0.5.2]
 

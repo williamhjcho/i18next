@@ -8,6 +8,22 @@ typedef ArgumentFormatter = String Function(
   Locale locale,
 );
 
+typedef MissingKeyHandler = String? Function(
+  Locale locale,
+  String key,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
+);
+
+typedef TranslationFailedHandler = String Function(
+  Locale locale,
+  String namespace,
+  String key,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
+  Object error,
+);
+
 /// Contains all options for [I18Next] to work properly.
 class I18NextOptions with Diagnosticable {
   const I18NextOptions({
@@ -24,6 +40,8 @@ class I18NextOptions with Diagnosticable {
     this.nestingSeparator,
     this.pluralSuffix,
     this.formatter,
+    this.missingKeyHandler,
+    this.translationFailedHandler,
   }) : super();
 
   static const I18NextOptions base = I18NextOptions(
@@ -40,6 +58,8 @@ class I18NextOptions with Diagnosticable {
     nestingSeparator: ',',
     pluralSuffix: 'plural',
     formatter: null,
+    missingKeyHandler: null,
+    translationFailedHandler: null,
   );
 
   /// The namespaces used to fallback to when no key matches were found on the
@@ -126,6 +146,16 @@ class I18NextOptions with Diagnosticable {
   /// String form ([Object.toString]).
   final ArgumentFormatter? formatter;
 
+  /// The default behavior is to just return the key itself that was used in
+  /// [I18Next.t].
+  final MissingKeyHandler? missingKeyHandler;
+
+  /// A callback that is used when the translation failed while being evaluated
+  /// (e.g. interpolation, nesting).
+  ///
+  /// If the key was missing, then it will call [missingKeyHandler] instead.
+  final TranslationFailedHandler? translationFailedHandler;
+
   /// Creates a new instance of [I18NextOptions] overriding any properties
   /// where [other] isn't null.
   ///
@@ -147,6 +177,9 @@ class I18NextOptions with Diagnosticable {
       nestingSuffix: other.nestingSuffix ?? nestingSuffix,
       nestingSeparator: other.nestingSeparator ?? nestingSeparator,
       formatter: other.formatter ?? formatter,
+      missingKeyHandler: other.missingKeyHandler ?? missingKeyHandler,
+      translationFailedHandler:
+          other.translationFailedHandler ?? translationFailedHandler,
     );
   }
 
@@ -166,6 +199,8 @@ class I18NextOptions with Diagnosticable {
     String? nestingSuffix,
     String? nestingSeparator,
     ArgumentFormatter? formatter,
+    MissingKeyHandler? missingKeyHandler,
+    TranslationFailedHandler? translationFailedHandler,
   }) {
     return I18NextOptions(
       fallbackNamespaces: fallbackNamespaces ?? this.fallbackNamespaces,
@@ -182,6 +217,9 @@ class I18NextOptions with Diagnosticable {
       nestingSuffix: nestingSuffix ?? this.nestingSuffix,
       nestingSeparator: nestingSeparator ?? this.nestingSeparator,
       formatter: formatter ?? this.formatter,
+      missingKeyHandler: missingKeyHandler ?? this.missingKeyHandler,
+      translationFailedHandler:
+          translationFailedHandler ?? this.translationFailedHandler,
     );
   }
 
@@ -199,6 +237,8 @@ class I18NextOptions with Diagnosticable {
         nestingSeparator,
         pluralSuffix,
         formatter,
+        missingKeyHandler,
+        translationFailedHandler,
       );
 
   @override
@@ -217,7 +257,9 @@ class I18NextOptions with Diagnosticable {
       other.nestingSuffix == nestingSuffix &&
       other.nestingSeparator == nestingSeparator &&
       other.pluralSuffix == pluralSuffix &&
-      other.formatter == formatter;
+      other.formatter == formatter &&
+      other.missingKeyHandler == missingKeyHandler &&
+      other.translationFailedHandler == translationFailedHandler;
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -235,6 +277,9 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('nestingSuffix', nestingSuffix))
       ..add(StringProperty('nestingSeparator', nestingSeparator))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
-      ..add(StringProperty('formatter', formatter?.toString()));
+      ..add(StringProperty('formatter', formatter?.toString()))
+      ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
+      ..add(StringProperty(
+          'translationFailedHandler', translationFailedHandler?.toString()));
   }
 }

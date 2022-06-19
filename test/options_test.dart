@@ -36,6 +36,8 @@ void main() {
     expect(base.nestingSeparator, ',');
     expect(base.pluralSuffix, 'plural');
     expect(base.formatter, isNull);
+    expect(base.missingKeyHandler, isNull);
+    expect(base.translationFailedHandler, isNull);
   });
 
   test('.defaultFormatter', () {

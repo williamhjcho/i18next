@@ -14,8 +14,12 @@ void main() {
       Map<String, dynamic> variables = const {},
       Locale locale = defaultLocale,
       ArgumentFormatter? formatter,
+      TranslationFailedHandler? translationFailedHandler,
     }) {
-      final options = baseOptions.copyWith(formatter: formatter);
+      final options = baseOptions.copyWith(
+        formatter: formatter,
+        translationFailedHandler: translationFailedHandler,
+      );
       return interpolate(locale, string, variables, options);
     }
 
