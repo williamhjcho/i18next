@@ -60,7 +60,7 @@ class I18Next {
   /// - If [variables] are given, they are used as a lookup table when a match
   ///   has been found (delimited by [I18NextOptions.interpolationPrefix] and
   ///   [I18NextOptions.interpolationSuffix]). Before the result is added to
-  ///   the final message, it first goes through [I18NextOptions.formatter].
+  ///   the final message, it first goes through [I18NextOptions.formats].
   /// - If [locale] is given, it overrides the current locale value.
   /// - If [options] is given, it overrides any non-null property over current
   ///   options.
