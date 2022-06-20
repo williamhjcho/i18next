@@ -326,14 +326,13 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('interpolationSuffix', interpolationSuffix))
       ..add(StringProperty('formatSeparator', formatSeparator))
       ..add(StringProperty('formatterValues', formatterValues?.toString()))
-      ..add(StringProperty('formatter', formats?.toString()))
+      ..add(StringProperty('formats', formats?.toString()))
       ..add(StringProperty('optionsSeparator', optionsSeparator))
       ..add(StringProperty('optionValueSeparator', optionValueSeparator))
       ..add(StringProperty('nestingPrefix', nestingPrefix))
       ..add(StringProperty('nestingSuffix', nestingSuffix))
       ..add(StringProperty('nestingSeparator', nestingSeparator))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
-      ..add(StringProperty('formatter', formats?.toString()))
       ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
       ..add(StringProperty(
           'translationFailedHandler', translationFailedHandler?.toString()));

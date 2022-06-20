@@ -76,9 +76,7 @@ String interpolate(
     final value = evaluate(path, variables);
     return formatter.format(value, formats, locale, options) ??
         (throw InterpolationException(
-          'Could not evaluate or format variable',
-          match,
-        ));
+            'Could not evaluate or format variable', match));
   });
 }
 

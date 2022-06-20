@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
+
 import 'options.dart';
 
 // ignore_for_file: lines_longer_than_80_chars
@@ -104,7 +106,7 @@ class InterpolationFormat {
   bool operator ==(Object other) =>
       other is InterpolationFormat &&
       other.name == name &&
-      other.options == options;
+      const MapEquality().equals(other.options, options);
 
   @override
   String toString() => '($name, $options)';
