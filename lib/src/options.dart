@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
+import 'interpolation_format.dart';
+
 // ignore_for_file: lines_longer_than_80_chars
 
 /// The formatter signature for [I18NextOptions.formats].
@@ -11,7 +13,7 @@ import 'package:flutter/foundation.dart';
 /// chance for the formatter to do something
 typedef ValueFormatter = Object? Function(
   Object? value,
-  Map<String, Object> formatOptions,
+  InterpolationFormat format,
   Locale locale,
   I18NextOptions options,
 );

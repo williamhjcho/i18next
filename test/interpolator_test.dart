@@ -111,9 +111,10 @@ void main() {
               variables: {'variable': 'my variable'},
               formats: {
                 'format': expectAsync4(
-                  (variable, variableOptions, locale, options) {
+                  (variable, format, locale, options) {
                     expect(variable, 'my variable');
-                    expect(variableOptions, isEmpty);
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
                     expect(locale, defaultLocale);
                     return 'VALUE';
                   },
@@ -131,8 +132,10 @@ void main() {
               variables: {'variable': 'my variable'},
               formats: {
                 'format': expectAsync4(
-                  (variable, variableOptions, locale, options) {
+                  (variable, format, locale, options) {
                     expect(variable, 'my variable');
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
                     expect(locale, defaultLocale);
                     return null;
                   },
@@ -150,7 +153,7 @@ void main() {
               variables: {},
               formats: {
                 'format': expectAsync4(
-                  (variable, variableOptions, locale, options) => 'VALUE',
+                  (variable, format, locale, options) => 'VALUE',
                 ),
               },
             ),
@@ -166,13 +169,13 @@ void main() {
                 'This is a {{variable, fmt1, fmt2, fmt3}} string',
                 formats: {
                   'fmt1': expectAsync4(
-                    (variable, variableOptions, locale, options) => null,
+                    (variable, format, locale, options) => null,
                   ),
                   'fmt2': expectAsync4(
-                    (variable, variableOptions, locale, options) => null,
+                    (variable, format, locale, options) => null,
                   ),
                   'fmt3': expectAsync4(
-                    (variable, variableOptions, locale, options) => 'VALUE',
+                    (variable, format, locale, options) => 'VALUE',
                   ),
                 },
               ),

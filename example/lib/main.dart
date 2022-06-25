@@ -68,15 +68,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   static Map<String, ValueFormatter> formatters() => {
-        'uppercase': (value, valueOption, locale, options) =>
+        'uppercase': (value, format, locale, options) =>
             value?.toString().toUpperCase(),
-        'lowercase': (value, valueOption, locale, options) =>
+        'lowercase': (value, format, locale, options) =>
             value?.toString().toLowerCase(),
-        'datetime': (value, valueOption, locale, options) {
+        'datetime': (value, format, locale, options) {
           if (value is! DateTime) return value;
-          var format = valueOption['format'];
-          format = format is String ? format : 'dd/MM/yyyy';
-          return DateFormat(format, locale.toString()).format(value);
+          var dateFormat = format.options['format'];
+          dateFormat = dateFormat is String ? dateFormat : 'dd/MM/yyyy';
+          return DateFormat(dateFormat, locale.toString()).format(value);
         },
       };
 }

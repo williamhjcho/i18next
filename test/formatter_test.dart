@@ -30,9 +30,10 @@ void main() {
       () {
         options = options.copyWith(
           missingInterpolationHandler: expectAsync4(
-            (value, formatOptions, loc, opt) {
+            (value, format, loc, opt) {
               expect(value, 'Value');
-              expect(formatOptions, isEmpty);
+              expect(format.name, 'format');
+              expect(format.options, isEmpty);
               expect(loc, locale);
               expect(opt, options);
               return 'interpolation formatter fallback';
@@ -50,9 +51,10 @@ void main() {
       test('and it successfully formats', () {
         options = options.copyWith(
           formats: {
-            'format': expectAsync4((value, formatOptions, loc, opt) {
+            'format': expectAsync4((value, format, loc, opt) {
               expect(value, 'My Value');
-              expect(formatOptions, isEmpty);
+              expect(format.name, 'format');
+              expect(format.options, isEmpty);
               expect(loc, locale);
               expect(opt, options);
               return 'Replaced Value';
@@ -60,7 +62,7 @@ void main() {
           },
           // should not have been called
           missingInterpolationHandler: expectAsync4(
-            (value, formatOptions, loc, opt) => fail(''),
+            (value, format, loc, opt) => fail(''),
             count: 0,
           ),
         );
@@ -72,7 +74,7 @@ void main() {
         options = options.copyWith(
           formats: {
             'format': expectAsync4(
-              (value, formatOptions, loc, opt) => throw 'Some error',
+              (value, format, loc, opt) => throw 'Some error',
             ),
           },
         );
@@ -85,7 +87,7 @@ void main() {
       test('and it returns null', () {
         options = options.copyWith(
           formats: {
-            'format': expectAsync4((value, formatOptions, loc, opt) => null),
+            'format': expectAsync4((value, format, loc, opt) => null),
           },
         );
         final result = format('My Value', ['format'], locale, options);
@@ -96,19 +98,22 @@ void main() {
     group('when there are multiple formats', () {
       test('and finds all format names', () {
         options = options.copyWith(formats: {
-          'fmt1': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt1': expectAsync4((value, format, loc, opt) {
             expect(value, 'initial value');
-            expect(formatOptions, isEmpty);
+            expect(format.name, 'fmt1');
+            expect(format.options, isEmpty);
             return 'replaced first value';
           }),
-          'fmt2': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt2': expectAsync4((value, format, loc, opt) {
             expect(value, 'replaced first value');
-            expect(formatOptions, {'option': 'optValue'});
+            expect(format.name, 'fmt2');
+            expect(format.options, {'option': 'optValue'});
             return 'replaced second value';
           }),
-          'fmt3': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt3': expectAsync4((value, format, loc, opt) {
             expect(value, 'replaced second value');
-            expect(formatOptions, {
+            expect(format.name, 'fmt3');
+            expect(format.options, {
               'option1': 'option value 1',
               'option2': 'option value 2',
             });
@@ -130,19 +135,22 @@ void main() {
 
       test('and the formats return different types', () {
         options = options.copyWith(formats: {
-          'fmt1': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt1': expectAsync4((value, format, loc, opt) {
             expect(value, 'initial value');
-            expect(formatOptions, isEmpty);
+            expect(format.name, 'fmt1');
+            expect(format.options, isEmpty);
             return 123.456;
           }),
-          'fmt2': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt2': expectAsync4((value, format, loc, opt) {
             expect(value, 123.456);
-            expect(formatOptions, isEmpty);
+            expect(format.name, 'fmt2');
+            expect(format.options, isEmpty);
             return const MapEntry('Some Key', 999);
           }),
-          'fmt3': expectAsync4((value, formatOptions, loc, opt) {
+          'fmt3': expectAsync4((value, format, loc, opt) {
             expect(value, const MapEntry('Some Key', 999));
-            expect(formatOptions, isEmpty);
+            expect(format.name, 'fmt3');
+            expect(format.options, isEmpty);
             return ['a', 'b', 'c'];
           }),
         });
@@ -156,14 +164,16 @@ void main() {
         'but last format returns a value',
         () {
           options = options.copyWith(formats: {
-            'fmt1': expectAsync4((value, formatOptions, loc, opt) {
+            'fmt1': expectAsync4((value, format, loc, opt) {
               expect(value, 'initial value');
-              expect(formatOptions, isEmpty);
+              expect(format.name, 'fmt1');
+              expect(format.options, isEmpty);
               return null;
             }),
-            'fmt2': expectAsync4((value, formatOptions, loc, opt) {
+            'fmt2': expectAsync4((value, format, loc, opt) {
               expect(value, isNull);
-              expect(formatOptions, isEmpty);
+              expect(format.name, 'fmt2');
+              expect(format.options, isEmpty);
               return 'replaced second value';
             }),
           });
