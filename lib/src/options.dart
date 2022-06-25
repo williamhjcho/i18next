@@ -52,6 +52,7 @@ class I18NextOptions with Diagnosticable {
     this.nestingSeparator,
     this.pluralSuffix,
     this.missingKeyHandler,
+    this.missingInterpolationHandler,
     this.translationFailedHandler,
   }) : super();
 
@@ -76,6 +77,7 @@ class I18NextOptions with Diagnosticable {
     nestingSeparator: ',',
     pluralSuffix: 'plural',
     missingKeyHandler: null,
+    missingInterpolationHandler: null,
     translationFailedHandler: null,
   );
 
@@ -183,6 +185,11 @@ class I18NextOptions with Diagnosticable {
   /// [I18Next.t].
   final MissingKeyHandler? missingKeyHandler;
 
+  /// Called when the interpolation format in [formats] is not found.
+  ///
+  /// The default behavior just returns the value itself.
+  final ValueFormatter? missingInterpolationHandler;
+
   /// A callback that is used when the translation failed while being evaluated
   /// (e.g. interpolation, nesting).
   ///
@@ -217,6 +224,8 @@ class I18NextOptions with Diagnosticable {
       nestingSuffix: other.nestingSuffix ?? nestingSuffix,
       nestingSeparator: other.nestingSeparator ?? nestingSeparator,
       missingKeyHandler: other.missingKeyHandler ?? missingKeyHandler,
+      missingInterpolationHandler:
+          other.missingInterpolationHandler ?? missingInterpolationHandler,
       translationFailedHandler:
           other.translationFailedHandler ?? translationFailedHandler,
     );
@@ -242,6 +251,7 @@ class I18NextOptions with Diagnosticable {
     String? nestingSuffix,
     String? nestingSeparator,
     MissingKeyHandler? missingKeyHandler,
+    ValueFormatter? missingInterpolationHandler,
     TranslationFailedHandler? translationFailedHandler,
   }) {
     return I18NextOptions(
@@ -262,6 +272,8 @@ class I18NextOptions with Diagnosticable {
       nestingSuffix: nestingSuffix ?? this.nestingSuffix,
       nestingSeparator: nestingSeparator ?? this.nestingSeparator,
       missingKeyHandler: missingKeyHandler ?? this.missingKeyHandler,
+      missingInterpolationHandler:
+          missingInterpolationHandler ?? this.missingInterpolationHandler,
       translationFailedHandler:
           translationFailedHandler ?? this.translationFailedHandler,
     );
@@ -285,6 +297,7 @@ class I18NextOptions with Diagnosticable {
         nestingSeparator,
         pluralSuffix,
         missingKeyHandler,
+        missingInterpolationHandler,
         translationFailedHandler,
       );
 
@@ -310,6 +323,7 @@ class I18NextOptions with Diagnosticable {
         other.nestingSeparator == nestingSeparator &&
         other.pluralSuffix == pluralSuffix &&
         other.missingKeyHandler == missingKeyHandler &&
+        other.missingInterpolationHandler == missingInterpolationHandler &&
         other.translationFailedHandler == translationFailedHandler;
   }
 
@@ -334,6 +348,8 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('nestingSeparator', nestingSeparator))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
       ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
+      ..add(StringProperty('missingInterpolationHandler',
+          missingInterpolationHandler?.toString()))
       ..add(StringProperty(
           'translationFailedHandler', translationFailedHandler?.toString()));
   }

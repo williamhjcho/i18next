@@ -23,7 +23,8 @@ String? format(
   final result = formats.fold<Object?>(value, (currentValue, format) {
     try {
       final parsedFormat = parseFormatString(format, options);
-      final formatter = options.formats?[parsedFormat.name];
+      final formatter = options.formats?[parsedFormat.name] ??
+          options.missingInterpolationHandler;
       if (formatter != null) {
         return formatter(currentValue, parsedFormat.options, locale, options);
       }

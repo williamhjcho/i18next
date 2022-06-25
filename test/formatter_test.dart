@@ -25,6 +25,27 @@ void main() {
       expect(result, 'value');
     });
 
+    test(
+      'given no matching formats by name with a missingInterpolationHandler',
+      () {
+        options = options.copyWith(
+          missingInterpolationHandler: expectAsync4(
+            (value, formatOptions, loc, opt) {
+              expect(value, 'Value');
+              expect(formatOptions, isEmpty);
+              expect(loc, locale);
+              expect(opt, options);
+              return 'interpolation formatter fallback';
+            },
+          ),
+        );
+        expect(
+          format('Value', ['format'], locale, options),
+          'interpolation formatter fallback',
+        );
+      },
+    );
+
     group('when there is one format', () {
       test('and it successfully formats', () {
         options = options.copyWith(
@@ -37,6 +58,11 @@ void main() {
               return 'Replaced Value';
             }),
           },
+          // should not have been called
+          missingInterpolationHandler: expectAsync4(
+            (value, formatOptions, loc, opt) => fail(''),
+            count: 0,
+          ),
         );
         final result = format('My Value', ['format'], locale, options);
         expect(result, 'Replaced Value');

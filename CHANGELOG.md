@@ -35,6 +35,8 @@
       "keyWithOptions": "Some format {{value, formatName(option1Name: option1Value; option2Name: option2Value)}}"
     }
     ```
+  * Also adds a `I18NextOptions.missingInterpolationHandler` that can also be used as the previous implementation,
+    to avoid a full migration if needed.
 
 ## [0.5.2]
 
