@@ -1,4 +1,4 @@
-# [Next version]
+# [0.6.0-dev]
 
 * Adds `AssetBundleLocalizationDataSource.cache` property (default is still true)
 * Adds name arguments to the typedefs
