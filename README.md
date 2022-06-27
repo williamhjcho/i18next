@@ -11,15 +11,15 @@ Mind that this is still a pre-1.0.0 so breaking changes may occur frequently.
 - [x] Support for simple plural forms (one or plural)
 - [x] Support for multiple plural forms (one, few, many, plural, ...)
 - [x] Plural and context fallbacks
-- [ ] Locale and namespace fallbacks
+- [x] Locale and namespace fallbacks
 - [x] Get string or object tree
 - [x] Support for nesting
-- [ ] Sprintf support
 - [x] Flutter's `LocalizationsDelegate` support
 - [x] Asset bundle localizations data source (retrieves from `pubspec.yaml`). See the example for more details.
-- [ ] Resource caching :wip:
-- [ ] Retrieve resource files from server :wip:
-- [ ] Custom post processing
+- [ ] Sprintf support
+- [ ] Resource caching
+- [ ] Retrieve resource files from server
+- [ ] Custom post-processing
 
 ## Usage
 
@@ -27,7 +27,7 @@ Simply declare the package in your `pubspec.yaml`
 
 ```yaml
 dependencies:
-  i18next: ^0.0.1
+  i18next: ^0.5.0
 ```
 
 To use it with flutter's `LocalizationsDelegate` you first create `I18NextLocalizationDelegate` and register it in your `WidgetsApp` (`MaterialApp` or `CupertinoApp`).
@@ -179,14 +179,16 @@ i18next.t('friend', context: 'female', count: 100); // '100 girlfriends'
 
 ```json
 {
-  "key1": "The current date is {{now, MM/DD/YYYY}}",
-  "key2": "{{text, uppercase}} just uppercased"
+  "key1": "{{text, uppercase}} just uppercased",
+  "key2": "The current date is {{now, datetime(format:dd/MM/yyyy)}}",
+  "key3": "Right now we are in {{now, datetime(format:MMM), uppercase}}."
 }
 ```
 
 ```dart
-i18next.t('key1', arguments: { 'now': DateTime.now() }); // 'The current date is 01/01/2020'
-i18next.t('key2', arguments: { 'text': 'my text' }); // 'MY TEXT just uppercased'
+i18next.t('key1', arguments: { 'text': 'my text' }); // 'MY TEXT just uppercased'
+i18next.t('key2', arguments: { 'now': DateTime.now() }); // 'The current date is 21/01/2020'
+i18next.t('key3', arguments: { 'now': DateTime.now() }); // 'Right now we are in JAN.'
 ```
 
 There are other usages and possibilities as well, this is just an example of what is defined by this format.

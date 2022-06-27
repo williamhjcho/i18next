@@ -1,7 +1,4 @@
-import 'dart:ui';
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:i18next/interpolator.dart';
 import 'package:i18next/src/options.dart';
 
 void main() {
@@ -15,12 +12,16 @@ void main() {
     expect(options.keySeparator, isNull);
     expect(options.interpolationPrefix, isNull);
     expect(options.interpolationSuffix, isNull);
-    expect(options.interpolationSeparator, isNull);
+    expect(options.formatSeparator, isNull);
+    expect(options.formats, isNull);
+    expect(options.optionsSeparator, isNull);
+    expect(options.optionValueSeparator, isNull);
     expect(options.nestingPrefix, isNull);
     expect(options.nestingSuffix, isNull);
     expect(options.nestingSeparator, isNull);
     expect(options.pluralSuffix, isNull);
-    expect(options.formatter, isNull);
+    expect(options.missingKeyHandler, isNull);
+    expect(options.translationFailedHandler, isNull);
   });
 
   test('default base values', () {
@@ -30,29 +31,16 @@ void main() {
     expect(base.keySeparator, '.');
     expect(base.interpolationPrefix, '{{');
     expect(base.interpolationSuffix, '}}');
-    expect(base.interpolationSeparator, ',');
+    expect(base.formatSeparator, ',');
+    expect(base.formats, const {});
+    expect(base.optionsSeparator, ';');
+    expect(base.optionValueSeparator, ':');
     expect(base.nestingPrefix, r'$t(');
     expect(base.nestingSuffix, ')');
     expect(base.nestingSeparator, ',');
     expect(base.pluralSuffix, 'plural');
-    expect(base.formatter, isNull);
     expect(base.missingKeyHandler, isNull);
     expect(base.translationFailedHandler, isNull);
-  });
-
-  test('.defaultFormatter', () {
-    const format = 'format';
-    const locale = Locale('en');
-    const formatter = interpolatorDefaultFormatter;
-
-    expect(formatter('My value', format, locale), 'My value');
-    expect(formatter(9876.1234, format, locale), '9876.1234');
-
-    const object = {'my': 'value'};
-    expect(formatter(object, format, locale), object.toString());
-
-    final date = DateTime.now();
-    expect(formatter(date, format, locale), date.toString());
   });
 
   group('#merge', () {
@@ -65,12 +53,15 @@ void main() {
       keySeparator: 'Some keySeparator',
       interpolationPrefix: 'Some interpolationPrefix',
       interpolationSuffix: 'Some interpolationSuffix',
-      interpolationSeparator: 'Some interpolationSeparator',
+      formatSeparator: 'Some interpolationSeparator',
+      formatterValues: {'key': 'Some formatterValues'},
+      formats: {'fmt': (value, options, loc, opt) => value?.toString()},
+      optionsSeparator: 'Some optionsSeparator',
+      optionValueSeparator: 'Some optionValueSeparator',
       nestingPrefix: 'Some nestingPrefix',
       nestingSuffix: 'Some nestingSuffix',
       nestingSeparator: 'Some nestingSeparator',
       pluralSuffix: 'Some pluralSuffix',
-      formatter: (value, format, locale) => value.toString(),
     );
 
     test('given no values', () {
@@ -114,12 +105,15 @@ void main() {
       keySeparator: 'Some keySeparator',
       interpolationPrefix: 'Some interpolationPrefix',
       interpolationSuffix: 'Some interpolationSuffix',
-      interpolationSeparator: 'Some interpolationSeparator',
+      formatSeparator: 'Some interpolationSeparator',
+      formatterValues: {'a': 0},
+      formats: {'fmt': (value, options, loc, opt) => value?.toString()},
+      optionsSeparator: 'Some optionsSeparator',
+      optionValueSeparator: 'Some optionValueSeparator',
       nestingPrefix: 'Some nestingPrefix',
       nestingSuffix: 'Some nestingSuffix',
       nestingSeparator: 'Some nestingSeparator',
       pluralSuffix: 'Some pluralSuffix',
-      formatter: (value, format, locale) => value.toString(),
     );
 
     test('equality', () {
@@ -141,7 +135,11 @@ void main() {
       another.keySeparator!,
       another.interpolationPrefix!,
       another.interpolationSuffix!,
-      another.interpolationSeparator!,
+      another.formatSeparator!,
+      another.formatterValues!,
+      another.formats!,
+      another.optionsSeparator!,
+      another.optionValueSeparator!,
       another.nestingPrefix!,
       another.nestingSuffix!,
       another.nestingSeparator!,
@@ -156,11 +154,15 @@ void main() {
           keySeparator: permutation[4] as String?,
           interpolationPrefix: permutation[5] as String?,
           interpolationSuffix: permutation[6] as String?,
-          interpolationSeparator: permutation[7] as String?,
-          nestingPrefix: permutation[8] as String?,
-          nestingSuffix: permutation[9] as String?,
-          nestingSeparator: permutation[10] as String?,
-          pluralSuffix: permutation[11] as String?,
+          formatSeparator: permutation[7] as String?,
+          formatterValues: permutation[8] as dynamic,
+          formats: permutation[9] as dynamic,
+          optionsSeparator: permutation[10] as String?,
+          optionValueSeparator: permutation[11] as String?,
+          nestingPrefix: permutation[12] as String?,
+          nestingSuffix: permutation[13] as String?,
+          nestingSeparator: permutation[14] as String?,
+          pluralSuffix: permutation[15] as String?,
         );
         // at least one should be different
         expect(result, isNot(base));
@@ -193,46 +195,43 @@ void main() {
           permutation[6] ?? base.interpolationSuffix,
         );
         expect(
-          result.interpolationSeparator,
-          permutation[7] ?? base.interpolationSeparator,
+          result.formatSeparator,
+          permutation[7] ?? base.formatSeparator,
+        );
+        expect(
+          result.formatterValues,
+          permutation[8] ?? base.formatterValues,
+        );
+        expect(
+          result.formats,
+          permutation[9] ?? base.formats,
+        );
+        expect(
+          result.optionsSeparator,
+          permutation[10] ?? base.optionsSeparator,
+        );
+        expect(
+          result.optionValueSeparator,
+          permutation[11] ?? base.optionValueSeparator,
         );
         expect(
           result.nestingPrefix,
-          permutation[8] ?? base.nestingPrefix,
+          permutation[12] ?? base.nestingPrefix,
         );
         expect(
           result.nestingSuffix,
-          permutation[9] ?? base.nestingSuffix,
+          permutation[13] ?? base.nestingSuffix,
         );
         expect(
           result.nestingSeparator,
-          permutation[10] ?? base.nestingSeparator,
+          permutation[14] ?? base.nestingSeparator,
         );
         expect(
           result.pluralSuffix,
-          permutation[11] ?? base.pluralSuffix,
+          permutation[15] ?? base.pluralSuffix,
         );
       });
     }
-
-    test('given all values', () {
-      final result = base.copyWith(
-        fallbackNamespaces: another.fallbackNamespaces,
-        namespaceSeparator: another.namespaceSeparator,
-        contextSeparator: another.contextSeparator,
-        pluralSeparator: another.pluralSeparator,
-        keySeparator: another.keySeparator,
-        pluralSuffix: another.pluralSuffix,
-        interpolationPrefix: another.interpolationPrefix,
-        interpolationSuffix: another.interpolationSuffix,
-        interpolationSeparator: another.interpolationSeparator,
-        nestingPrefix: another.nestingPrefix,
-        nestingSuffix: another.nestingSuffix,
-        nestingSeparator: another.nestingSeparator,
-        formatter: another.formatter,
-      );
-      expect(result, another);
-    });
   });
 }
 

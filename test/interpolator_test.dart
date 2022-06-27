@@ -13,11 +13,11 @@ void main() {
       String string, {
       Map<String, dynamic> variables = const {},
       Locale locale = defaultLocale,
-      ArgumentFormatter? formatter,
+      Map<String, ValueFormatter>? formats,
       TranslationFailedHandler? translationFailedHandler,
     }) {
       final options = baseOptions.copyWith(
-        formatter: formatter,
+        formats: formats,
         translationFailedHandler: translationFailedHandler,
       );
       return interpolate(locale, string, variables, options);
@@ -25,16 +25,9 @@ void main() {
 
     final throwsInterpolationException = throwsA(isA<InterpolationException>());
 
-    ArgumentFormatter noFormatterCalls() =>
-        expectAsync3((key, a, b) => fail('Should not have been called'),
-            count: 0);
-
     test('given a non matching string', () {
       expect(
-        interpol(
-          'This is a normal string',
-          formatter: noFormatterCalls(),
-        ),
+        interpol('This is a normal string'),
         'This is a normal string',
       );
     });
@@ -42,10 +35,7 @@ void main() {
     group('given a matching string', () {
       test('without variable or format', () {
         expect(
-          () => interpol(
-            'This is a {{}} string',
-            formatter: noFormatterCalls(),
-          ),
+          () => interpol('This is a {{}} string'),
           throwsInterpolationException,
         );
       });
@@ -54,10 +44,7 @@ void main() {
         test('without variables', () {
           const string = 'This is a {{variable}} string';
           expect(
-            () => interpol(
-              string,
-              formatter: noFormatterCalls(),
-            ),
+            () => interpol(string),
             throwsInterpolationException,
           );
         });
@@ -67,14 +54,8 @@ void main() {
             interpol(
               'This is a {{variable}} string',
               variables: {'variable': 'my variable'},
-              formatter: expectAsync3((variable, format, locale) {
-                expect(variable, 'my variable');
-                expect(format, isNull);
-                expect(locale, defaultLocale);
-                return 'VALUE';
-              }),
             ),
-            'This is a VALUE string',
+            'This is a my variable string',
           );
         });
 
@@ -109,7 +90,6 @@ void main() {
             () => interpol(
               'This is a {{variable}} string',
               variables: {'another': 'value'},
-              formatter: noFormatterCalls(),
             ),
             throwsInterpolationException,
           );
@@ -118,27 +98,90 @@ void main() {
 
       test('with format only', () {
         expect(
-          () => interpol(
-            'This is a {{, some format}} string',
-            formatter: noFormatterCalls(),
-          ),
+          () => interpol('This is a {{, some format}} string'),
           throwsInterpolationException,
         );
       });
 
-      test('with variable and format and replaceable variables', () {
-        expect(
-          interpol(
-            'This is a {{variable, format}} string',
-            variables: {'variable': 'my variable'},
-            formatter: expectAsync3((variable, format, locale) {
-              expect(variable, 'my variable');
-              expect(format, 'format');
-              expect(locale, defaultLocale);
-              return 'VALUE';
-            }),
-          ),
-          'This is a VALUE string',
+      group('with both variable and format ', () {
+        test('where variable is replaced and formatted', () {
+          expect(
+            interpol(
+              'This is a {{variable, format}} string',
+              variables: {'variable': 'my variable'},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) {
+                    expect(variable, 'my variable');
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
+                    expect(locale, defaultLocale);
+                    return 'VALUE';
+                  },
+                ),
+              },
+            ),
+            'This is a VALUE string',
+          );
+        });
+
+        test('where variable is replaced and formatter returns null', () {
+          expect(
+            () => interpol(
+              'This is a {{variable, format}} string',
+              variables: {'variable': 'my variable'},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) {
+                    expect(variable, 'my variable');
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
+                    expect(locale, defaultLocale);
+                    return null;
+                  },
+                ),
+              },
+            ),
+            throwsInterpolationException,
+          );
+        });
+
+        test('without a replaceable variable', () {
+          expect(
+            interpol(
+              'This is a {{variable, format}} string',
+              variables: {},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) => 'VALUE',
+                ),
+              },
+            ),
+            'This is a VALUE string',
+          );
+        });
+
+        test(
+          'with multiple formats, and only the last format returns a value',
+          () {
+            expect(
+              interpol(
+                'This is a {{variable, fmt1, fmt2, fmt3}} string',
+                formats: {
+                  'fmt1': expectAsync4(
+                    (variable, format, locale, options) => null,
+                  ),
+                  'fmt2': expectAsync4(
+                    (variable, format, locale, options) => null,
+                  ),
+                  'fmt3': expectAsync4(
+                    (variable, format, locale, options) => 'VALUE',
+                  ),
+                },
+              ),
+              'This is a VALUE string',
+            );
+          },
         );
       });
 
@@ -149,14 +192,8 @@ void main() {
             'This is a {{variable}} string',
             locale: anotherLocale,
             variables: {'variable': 'my variable'},
-            formatter: expectAsync3((variable, format, locale) {
-              expect(variable, 'my variable');
-              expect(format, isNull);
-              expect(locale, anotherLocale);
-              return 'VALUE';
-            }),
           ),
-          'This is a VALUE string',
+          'This is a my variable string',
         );
       });
     });
@@ -332,52 +369,46 @@ void main() {
   group('interpolationPattern', () {
     final pattern = interpolationPattern(baseOptions);
 
-    Iterable<List<String?>> allMatches(String text) =>
-        pattern.allMatches(text).map((match) => [
-              match.namedGroup('variable'),
-              match.namedGroup('format'),
-            ]);
+    Iterable<String?> allMatches(String text) =>
+        pattern.allMatches(text).map((match) => match.group(1));
 
     test('default pattern', () {
-      expect(
-        pattern.pattern,
-        r'\{\{(?<variable>.*?)(,\s*(?<format>.*?)\s*)?\}\}',
-      );
+      expect(pattern.pattern, r'\{\{(.*?)\}\}');
     });
 
     test('when has only one match without format', () {
-      expect(allMatches('My text has {{one}} match'), [
-        ['one', null]
-      ]);
+      expect(allMatches('My text has {{one}} match'), ['one']);
     });
 
     test('when has only one match with format', () {
-      expect(allMatches('My text has {{one, Xyz}} match'), [
-        ['one', 'Xyz']
-      ]);
+      expect(allMatches('My text has {{one, Xyz}} match'), ['one, Xyz']);
     });
 
     test('when has only one match with format with whitespaces', () {
-      expect(allMatches('My text has {{one,   Xyz}} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one, Xyz   }} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one,    Xyz   }} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one, \nXyz\n}} match'), [
-        ['one', 'Xyz']
-      ]);
+      expect(
+        allMatches('My text has {{one,   Xyz}} match'),
+        ['one,   Xyz'],
+      );
+      expect(
+        allMatches('My text has {{one, Xyz   }} match'),
+        ['one, Xyz   '],
+      );
+      expect(
+        allMatches('My text has {{one,    Xyz   }} match'),
+        ['one,    Xyz   '],
+      );
+      expect(
+        allMatches('My text has {{one, \nXyz\n}} match'),
+        ['one, \nXyz\n'],
+      );
     });
 
     test('when has multiple matches without formats', () {
       expect(allMatches('My {{text}} {{has}} {{four}} {{matches}}'), [
-        ['text', null],
-        ['has', null],
-        ['four', null],
-        ['matches', null]
+        'text',
+        'has',
+        'four',
+        'matches',
       ]);
     });
 
@@ -386,12 +417,7 @@ void main() {
         allMatches(
           'My {{text, Aaa}} {{has, Bbb}} {{four, Ccc}} {{matches, Ddd}}',
         ),
-        [
-          ['text', 'Aaa'],
-          ['has', 'Bbb'],
-          ['four', 'Ccc'],
-          ['matches', 'Ddd']
-        ],
+        ['text, Aaa', 'has, Bbb', 'four, Ccc', 'matches, Ddd'],
       );
     });
 
@@ -399,13 +425,7 @@ void main() {
       final matches = allMatches(
         'My {{text}} {{has, Bbb}} {{four, Ccc}} {{matches}}',
       );
-
-      expect(matches, [
-        ['text', null],
-        ['has', 'Bbb'],
-        ['four', 'Ccc'],
-        ['matches', null]
-      ]);
+      expect(matches, ['text', 'has, Bbb', 'four, Ccc', 'matches']);
     });
   });
 

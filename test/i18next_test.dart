@@ -65,7 +65,10 @@ void main() {
     when(resourceStore.retrieve(any, any, any, any)).thenReturn(null);
 
     expect(i18next.t('someKey'), 'someKey');
+    verify(resourceStore.retrieve(locale, '', 'someKey', any)).called(1);
+
     expect(i18next.t('some.key'), 'some.key');
+    verify(resourceStore.retrieve(locale, '', 'some.key', any)).called(1);
   });
 
   test('given an existing string key', () {
@@ -110,7 +113,12 @@ void main() {
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3((_, __, ___) => fail(''), count: 0),
+          formats: {
+            'fmt': expectAsync4(
+              (value, options, loc, opt) => fail(''),
+              count: 0,
+            ),
+          },
         ),
       );
       mockKey('key', 'no interpolations here');
@@ -118,15 +126,17 @@ void main() {
       expect(i18next.t('$namespace:key'), 'no interpolations here');
     });
 
-    test('with no matching variables', () {
+    test('with no matching variables or formats', () {
       i18next = I18Next(
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3(
-            (value, format, locale) => value.toString(),
-            count: 0,
-          ),
+          formats: {
+            'fmt': expectAsync4(
+              (value, options, loc, opt) => fail(''),
+              count: 0,
+            ),
+          },
         ),
       );
       mockKey('key', 'leading {{value, format}} trailing');
@@ -142,30 +152,12 @@ void main() {
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3((value, format, locale) => value.toString()),
-        ),
-      );
-      mockKey('key', 'leading {{value, format}} trailing');
-
-      expect(
-        i18next.t('$namespace:key', variables: {'value': 'eulav'}),
-        'leading eulav trailing',
-      );
-    });
-
-    test('with one matching interpolation', () {
-      i18next = I18Next(
-        locale,
-        resourceStore,
-        options: I18NextOptions(
-          formatter: expectAsync3(
-            (value, format, locale) {
-              expect(value, 'eulav');
-              expect(format, 'format');
-              expect(locale, locale);
-              return value.toString();
-            },
-          ),
+          formats: {
+            'fmt': expectAsync4(
+              (value, options, loc, opt) => fail(''),
+              count: 0,
+            ),
+          },
         ),
       );
       mockKey('key', 'leading {{value, format}} trailing');
@@ -177,36 +169,43 @@ void main() {
     });
 
     test('with multiple matching interpolations', () {
-      final values = <Object>[];
-      final formats = <Object?>[];
+      final values = <Object?>[];
       i18next = I18Next(
         locale,
         resourceStore,
         options: I18NextOptions(
-          formatter: expectAsync3(
-            (value, format, locale) {
-              values.add(value);
-              formats.add(format);
-              return value.toString();
-            },
-            count: 2,
-          ),
+          formats: {
+            'format1': expectAsync4(
+              (value, options, loc, opt) {
+                values.add(value);
+                return value?.toString().toUpperCase();
+              },
+              count: 1,
+            ),
+            'format2': expectAsync4(
+              (value, options, loc, opt) {
+                values.add(value);
+                return value?.toString().toUpperCase();
+              },
+              count: 1,
+            ),
+          },
         ),
       );
       mockKey(
-          'key',
-          'leading {{value1, format1}} middle '
-              '{{value2, format2}} trailing');
+        'key',
+        'leading {{value1, format1}} middle '
+            '{{value2, format2}} trailing',
+      );
 
       expect(
         i18next.t('$namespace:key', variables: {
           'value1': '1eulav',
           'value2': '2eulav',
         }),
-        'leading 1eulav middle 2eulav trailing',
+        'leading 1EULAV middle 2EULAV trailing',
       );
       expect(values, orderedEquals(<String>['1eulav', '2eulav']));
-      expect(formats, orderedEquals(<String>['format1', 'format2']));
     });
   });
 

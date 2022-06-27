@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:meta/meta.dart';
-
+import 'src/formatter.dart' as formatter;
 import 'src/options.dart';
 import 'utils.dart';
 
@@ -39,12 +38,12 @@ class NestingException implements Exception {
 
 /// Replaces occurrences of matches in [string] for the named values
 /// in [options] (if they exist), by first passing through the
-/// [I18NextOptions.formatter] before joining the resulting string.
+/// [I18NextOptions.formats] before joining the resulting string.
 ///
 /// - 'Hello {{name}}' + {name: 'World'} -> 'Hello World'.
 ///   This example illustrates a simple interpolation.
 /// - 'Now is {{date, dd/MM}}' + {date: DateTime.now()} -> 'Now is 23/09'.
-///   In this example, [I18NextOptions.formatter] must be able to
+///   In this example, [I18NextOptions.formats] must be able to
 ///   properly format the date.
 /// - 'A string with {{grouped.key}}' + {'grouped': {'key': "grouped keys}} ->
 ///   'A string with grouped keys'. In this example the variables are in the
@@ -56,35 +55,30 @@ String interpolate(
   I18NextOptions options,
 ) {
   final pattern = interpolationPattern(options);
+  final formatSeparator = options.formatSeparator ?? ',';
   final keySeparator = options.keySeparator ?? '.';
 
   return string.splitMapJoin(pattern, onMatch: (match) {
-    match = match as RegExpMatch;
-    final variable = match.namedGroup('variable')?.trim();
-    if (variable == null || variable.isEmpty) {
+    var variable = match[1]!.trim();
+
+    Iterable<String> formats = [];
+    if (variable.contains(formatSeparator)) {
+      final variableParts = variable.split(formatSeparator);
+      variable = variableParts.first.trim();
+      formats = variableParts.skip(1).map((e) => e.trim());
+    }
+
+    if (variable.isEmpty) {
       throw InterpolationException('Missing variable', match);
     }
 
     final path = variable.split(keySeparator);
     final value = evaluate(path, variables);
-    if (value == null) {
-      throw InterpolationException('Could not evaluate variable', match);
-    }
-
-    final formatter = options.formatter ?? interpolatorDefaultFormatter;
-    final format = match.namedGroup('format');
-    return formatter(value, format, locale);
+    return formatter.format(value, formats, locale, options) ??
+        (throw InterpolationException(
+            'Could not evaluate or format variable', match));
   });
 }
-
-/// Simply returns [value] in string form. Ignores [format] and [locale].
-@visibleForTesting
-String interpolatorDefaultFormatter(
-  Object value,
-  String? format,
-  Locale locale,
-) =>
-    value.toString();
 
 /// Replaces occurrences of nested key-values in [string] for other
 /// key-values. Essentially calls [I18Next.translate] with the nested value.
@@ -130,13 +124,7 @@ String nest(
 RegExp interpolationPattern(I18NextOptions options) {
   final prefix = RegExp.escape(options.interpolationPrefix ?? '{{');
   final suffix = RegExp.escape(options.interpolationSuffix ?? '}}');
-  final separator = RegExp.escape(options.interpolationSeparator ?? ',');
-  return RegExp(
-    '$prefix'
-    '(?<variable>.*?)'
-    '($separator\\s*(?<format>.*?)\\s*)?'
-    '$suffix',
-  );
+  return RegExp('$prefix(.*?)$suffix', dotAll: true);
 }
 
 RegExp nestingPattern(I18NextOptions options) {
