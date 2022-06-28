@@ -187,9 +187,11 @@ class I18NextOptions with Diagnosticable {
   /// [I18Next.t].
   final MissingKeyHandler? missingKeyHandler;
 
-  /// Called when the interpolation format in [formats] is not found.
+  /// Called when the interpolation format in [formats] is not found, or when
+  /// the value being interpolated is not a [String].
   ///
-  /// The default behavior just returns the value itself.
+  /// The default behavior just returns the value itself (which will fallback
+  /// into a [Object.toString] call.
   final ValueFormatter? missingInterpolationHandler;
 
   /// A callback that is used when the translation failed while being evaluated

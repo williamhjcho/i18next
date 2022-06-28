@@ -36,6 +36,15 @@ String? format(
     }
     return currentValue;
   });
+
+  if (result != null && result is! String) {
+    final formatter = options.missingInterpolationHandler;
+    if (formatter != null) {
+      return formatter(result, InterpolationFormat.fallback, locale, options)
+          ?.toString();
+    }
+  }
+
   return result?.toString();
 }
 

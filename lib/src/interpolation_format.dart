@@ -11,7 +11,11 @@ import 'package:collection/collection.dart';
 /// `formatName()` = name='formatName' options=empty
 /// `formatName(op1: true; op2: some text)` = name='formatName' options={'op1': true, op2:'some text'}
 class InterpolationFormat {
-  InterpolationFormat(this.name, this.options);
+  const InterpolationFormat(this.name, this.options);
+
+  /// Special interpolation case where the value was not a [String], and no
+  /// other formats were found.
+  static const fallback = InterpolationFormat('fallback', {});
 
   /// The name of the format
   final String name;

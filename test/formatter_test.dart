@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/src/formatter.dart';
+import 'package:i18next/src/interpolation_format.dart';
 import 'package:i18next/src/options.dart';
 
 void main() {
@@ -13,21 +14,71 @@ void main() {
   });
 
   group('format', () {
-    test('given no formats', () {
-      options = options.copyWith(formats: {});
-      final result = format('value', [], locale, options);
-      expect(result, 'value');
+    group('given no formats', () {
+      test('without a missingInterpolationHandler', () {
+        options = options.copyWith(formats: {});
+        final result = format('value', [], locale, options);
+        expect(result, 'value');
+      });
+
+      group('with a missingInterpolationHandler', () {
+        test('when the result is a string', () {
+          options = options.copyWith(
+            missingInterpolationHandler: expectAsync4(
+              (value, format, loc, opt) => fail(''),
+              count: 0,
+            ),
+          );
+          expect(format('Value', [], locale, options), 'Value');
+        });
+
+        group('when the result is not a string', () {
+          test('and the fallback returns a value', () {
+            final Object? value = ['Value'];
+            options = options.copyWith(
+              missingInterpolationHandler: expectAsync4(
+                (val, format, loc, opt) {
+                  expect(format, InterpolationFormat.fallback);
+                  expect(val, value);
+                  expect(loc, locale);
+                  expect(opt, options);
+                  return 'interpolation formatter fallback';
+                },
+              ),
+            );
+            expect(
+              format(value, [], locale, options),
+              'interpolation formatter fallback',
+            );
+          });
+
+          test('and the fallback returns null', () {
+            final Object? value = ['Value'];
+            options = options.copyWith(
+              missingInterpolationHandler: expectAsync4(
+                (val, format, loc, opt) {
+                  expect(format, InterpolationFormat.fallback);
+                  expect(val, value);
+                  expect(loc, locale);
+                  expect(opt, options);
+                  return null;
+                },
+              ),
+            );
+            expect(format(value, [], locale, options), isNull);
+          });
+        });
+      });
     });
 
-    test('given no matching formats by name', () {
-      options = options.copyWith(formats: {});
-      final result = format('value', ['format'], locale, options);
-      expect(result, 'value');
-    });
+    group('given no matching formats by name', () {
+      test('without a missingInterpolationHandler', () {
+        options = options.copyWith(formats: {});
+        final result = format('value', ['format'], locale, options);
+        expect(result, 'value');
+      });
 
-    test(
-      'given no matching formats by name with a missingInterpolationHandler',
-      () {
+      test('with a missingInterpolationHandler', () {
         options = options.copyWith(
           missingInterpolationHandler: expectAsync4(
             (value, format, loc, opt) {
@@ -44,8 +95,8 @@ void main() {
           format('Value', ['format'], locale, options),
           'interpolation formatter fallback',
         );
-      },
-    );
+      });
+    });
 
     group('when there is one format', () {
       test('and it successfully formats', () {
