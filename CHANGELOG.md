@@ -1,3 +1,8 @@
+# [0.6.0-dev+1]
+
+* Fix `missingInterpolationHandler` to also be called for interpolations that do not result into String (and are not null)
+  e.g. `{{someVar}}` with no formats
+
 # [0.6.0-dev]
 
 * Adds `AssetBundleLocalizationDataSource.cache` property (default is still true)
