@@ -34,6 +34,8 @@ typedef TranslationFailedHandler = String Function(
   Object error,
 );
 
+typedef EscapeHandler = String Function(String input);
+
 /// Contains all options for [I18Next] to work properly.
 class I18NextOptions with Diagnosticable {
   const I18NextOptions({
@@ -56,6 +58,8 @@ class I18NextOptions with Diagnosticable {
     this.missingKeyHandler,
     this.missingInterpolationHandler,
     this.translationFailedHandler,
+    this.escape,
+    this.escapeValue,
   }) : super();
 
   static const I18NextOptions base = I18NextOptions(
@@ -81,6 +85,8 @@ class I18NextOptions with Diagnosticable {
     missingKeyHandler: null,
     missingInterpolationHandler: null,
     translationFailedHandler: null,
+    escape: null,
+    escapeValue: true,
   );
 
   /// The namespaces used to fallback to when no key matches were found on the
@@ -200,6 +206,17 @@ class I18NextOptions with Diagnosticable {
   /// If the key was missing, then it will call [missingKeyHandler] instead.
   final TranslationFailedHandler? translationFailedHandler;
 
+  /// The escape handler that is called after interpolating and formatting a
+  /// variable only if [escapeValue] is enabled.
+  ///
+  /// By default will escape XML tags.
+  final EscapeHandler? escape;
+
+  /// Whether to call [escape] after interpolating and formatting a variable.
+  ///
+  /// Default is true.
+  final bool? escapeValue;
+
   /// Creates a new instance of [I18NextOptions] overriding any properties
   /// where [other] isn't null.
   ///
@@ -232,6 +249,8 @@ class I18NextOptions with Diagnosticable {
           other.missingInterpolationHandler ?? missingInterpolationHandler,
       translationFailedHandler:
           other.translationFailedHandler ?? translationFailedHandler,
+      escape: other.escape ?? escape,
+      escapeValue: other.escapeValue ?? escapeValue,
     );
   }
 
@@ -257,6 +276,8 @@ class I18NextOptions with Diagnosticable {
     MissingKeyHandler? missingKeyHandler,
     ValueFormatter? missingInterpolationHandler,
     TranslationFailedHandler? translationFailedHandler,
+    EscapeHandler? escape,
+    bool? escapeValue,
   }) {
     return I18NextOptions(
       fallbackNamespaces: fallbackNamespaces ?? this.fallbackNamespaces,
@@ -280,6 +301,8 @@ class I18NextOptions with Diagnosticable {
           missingInterpolationHandler ?? this.missingInterpolationHandler,
       translationFailedHandler:
           translationFailedHandler ?? this.translationFailedHandler,
+      escape: escape ?? this.escape,
+      escapeValue: escapeValue ?? this.escapeValue,
     );
   }
 
@@ -303,6 +326,8 @@ class I18NextOptions with Diagnosticable {
         missingKeyHandler,
         missingInterpolationHandler,
         translationFailedHandler,
+        escape,
+        escapeValue,
       );
 
   @override
@@ -328,7 +353,9 @@ class I18NextOptions with Diagnosticable {
         other.pluralSuffix == pluralSuffix &&
         other.missingKeyHandler == missingKeyHandler &&
         other.missingInterpolationHandler == missingInterpolationHandler &&
-        other.translationFailedHandler == translationFailedHandler;
+        other.translationFailedHandler == translationFailedHandler &&
+        other.escape == escape &&
+        other.escapeValue == escapeValue;
   }
 
   @override
@@ -355,6 +382,8 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('missingInterpolationHandler',
           missingInterpolationHandler?.toString()))
       ..add(StringProperty(
-          'translationFailedHandler', translationFailedHandler?.toString()));
+          'translationFailedHandler', translationFailedHandler?.toString()))
+      ..add(StringProperty('escape', escape?.toString()))
+      ..add(StringProperty('escapeValue', escapeValue?.toString()));
   }
 }

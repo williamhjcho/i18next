@@ -1,3 +1,9 @@
+# [Next version]
+
+* Adds variable (XML) escaping by default
+  * To override this behavior, set `I18NextOptions.escape`
+  * Or to disable it, set `I18NextOptions.escapeValue = false`
+
 # [0.6.0-dev+1]
 
 * Fix `missingInterpolationHandler` to also be called for interpolations that do not result into String (and are not null)

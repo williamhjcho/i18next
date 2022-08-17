@@ -666,6 +666,32 @@ void main() {
     );
   });
 
+  test('escape', () {
+    mockKey('key', 'interpolated {{myVar}}');
+    mockKey('keyTagged', '<tag attr="value">and then {{myVar}}</tag>');
+
+    final vars = {'myVar': '<img />'};
+    expect(
+      i18next.t('$namespace:key', variables: vars),
+      'interpolated &lt;img &#x2F;&gt;',
+    );
+    expect(
+      i18next.t('$namespace:keyTagged', variables: vars),
+      '<tag attr="value">and then &lt;img &#x2F;&gt;</tag>',
+    );
+
+    // don't escape
+    const opts = I18NextOptions(escapeValue: false);
+    expect(
+      i18next.t('$namespace:key', variables: vars, options: opts),
+      'interpolated <img />',
+    );
+    expect(
+      i18next.t('$namespace:keyTagged', variables: vars, options: opts),
+      '<tag attr="value">and then <img /></tag>',
+    );
+  });
+
   group('.of', () {
     BuildContext? capturedContext;
 

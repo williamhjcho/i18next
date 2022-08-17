@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide escape;
 import 'package:i18next/i18next.dart';
 import 'package:i18next/interpolator.dart';
 
@@ -15,10 +15,12 @@ void main() {
       Locale locale = defaultLocale,
       Map<String, ValueFormatter>? formats,
       TranslationFailedHandler? translationFailedHandler,
+      EscapeHandler? escape,
     }) {
       final options = baseOptions.copyWith(
         formats: formats,
         translationFailedHandler: translationFailedHandler,
+        escape: escape,
       );
       return interpolate(locale, string, variables, options);
     }
@@ -194,6 +196,20 @@ void main() {
             variables: {'variable': 'my variable'},
           ),
           'This is a my variable string',
+        );
+      });
+
+      test('given escape', () {
+        expect(
+          interpol(
+            'This is a {{variable}} string',
+            variables: {'variable': '<tag>my variable</tag>'},
+            escape: expectAsync1((input) {
+              expect(input, '<tag>my variable</tag>');
+              return 'ESCAPED VAR';
+            }),
+          ),
+          'This is a ESCAPED VAR string',
         );
       });
     });
@@ -507,6 +523,21 @@ void main() {
         ['matches', null]
       ]);
     });
+  });
+
+  test('escape', () {
+    expect(escape(''), '');
+    expect(escape('&'), '&amp;');
+    expect(escape('<'), '&lt;');
+    expect(escape('>'), '&gt;');
+    expect(escape('"'), '&quot;');
+    expect(escape('\''), '&#39;');
+    expect(escape('/'), '&#x2F;');
+
+    expect(
+      escape('<tag attr="value">Some text</tag>'),
+      '&lt;tag attr=&quot;value&quot;&gt;Some text&lt;&#x2F;tag&gt;',
+    );
   });
 }
 
