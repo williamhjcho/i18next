@@ -525,6 +525,35 @@ void main() {
     });
   });
 
+  group('interpolationEscapePattern', () {
+    final pattern = interpolationUnescapePattern(baseOptions);
+
+    Iterable<String?> allMatches(String text) =>
+        pattern.allMatches(text).map((match) => match.group(1));
+
+    test('default pattern', () {
+      expect(pattern.pattern, r'\{\{-(.+?)\}\}');
+    });
+
+    test('when no matches', () {
+      expect(allMatches(''), []);
+      expect(allMatches('no matches'), []);
+      expect(allMatches('Some {{asd}}'), []);
+    });
+
+    test('when matches', () {
+      expect(allMatches('Some {{-value}}'), ['value']);
+      expect(allMatches('Some {{- value}}'), [' value']);
+      expect(allMatches('Some {{-   value}}'), ['   value']);
+
+      expect(allMatches('Some {{-value, fmt}}'), ['value, fmt']);
+      expect(allMatches('Some {{- value, fmt}}'), [' value, fmt']);
+      expect(allMatches('Some {{-   value, fmt}}'), ['   value, fmt']);
+
+      expect(allMatches('Some {{-value, fmt}} {{unescaped}}'), ['value, fmt']);
+    });
+  });
+
   test('escape', () {
     expect(escape(''), '');
     expect(escape('&'), '&amp;');

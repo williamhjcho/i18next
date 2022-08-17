@@ -666,30 +666,69 @@ void main() {
     );
   });
 
-  test('escape', () {
-    mockKey('key', 'interpolated {{myVar}}');
-    mockKey('keyTagged', '<tag attr="value">and then {{myVar}}</tag>');
-
+  group('escape', () {
     final vars = {'myVar': '<img />'};
-    expect(
-      i18next.t('$namespace:key', variables: vars),
-      'interpolated &lt;img &#x2F;&gt;',
-    );
-    expect(
-      i18next.t('$namespace:keyTagged', variables: vars),
-      '<tag attr="value">and then &lt;img &#x2F;&gt;</tag>',
-    );
 
-    // don't escape
-    const opts = I18NextOptions(escapeValue: false);
-    expect(
-      i18next.t('$namespace:key', variables: vars, options: opts),
-      'interpolated <img />',
-    );
-    expect(
-      i18next.t('$namespace:keyTagged', variables: vars, options: opts),
-      '<tag attr="value">and then <img /></tag>',
-    );
+    setUp(() {
+      mockKey('key', 'untagged text {{myVar}}');
+      mockKey('keyTagged', '<tag attr="val">tagged text {{myVar}}</tag>');
+      mockKey('keyEscaped', '<tag attr="val">tagged text {{- myVar}}</tag>');
+    });
+
+    test('default behavior', () {
+      expect(
+        i18next.t('$namespace:key', variables: vars),
+        'untagged text &lt;img &#x2F;&gt;',
+      );
+      expect(
+        i18next.t('$namespace:keyTagged', variables: vars),
+        '<tag attr="val">tagged text &lt;img &#x2F;&gt;</tag>',
+      );
+      expect(
+        i18next.t('$namespace:keyEscaped', variables: vars),
+        '<tag attr="val">tagged text <img /></tag>',
+      );
+    });
+
+    test('given escapeValue=false', () {
+      const opts = I18NextOptions(escapeValue: false);
+
+      expect(
+        i18next.t('$namespace:key', variables: vars, options: opts),
+        'untagged text <img />',
+      );
+      expect(
+        i18next.t('$namespace:keyTagged', variables: vars, options: opts),
+        '<tag attr="val">tagged text <img /></tag>',
+      );
+      expect(
+        i18next.t('$namespace:keyEscaped', variables: vars),
+        '<tag attr="val">tagged text <img /></tag>',
+      );
+    });
+
+    test('when formatter returns xml', () {
+      final opts = I18NextOptions(formats: {
+        'fmt': (value, format, locale, options) => '<fmt>$value</fmt>',
+      });
+      mockKey('key', 'untagged text {{myVar, fmt}}');
+      mockKey('keyTagged', '<tag attr="val">tagged text {{myVar, fmt}}</tag>');
+      mockKey(
+          'keyEscaped', '<tag attr="val">tagged text {{- myVar, fmt}}</tag>');
+
+      expect(
+        i18next.t('$namespace:key', variables: vars, options: opts),
+        'untagged text &lt;fmt&gt;&lt;img &#x2F;&gt;&lt;&#x2F;fmt&gt;',
+      );
+      expect(
+        i18next.t('$namespace:keyTagged', variables: vars, options: opts),
+        '<tag attr="val">tagged text &lt;fmt&gt;&lt;img &#x2F;&gt;&lt;&#x2F;fmt&gt;</tag>',
+      );
+      expect(
+        i18next.t('$namespace:keyEscaped', variables: vars, options: opts),
+        '<tag attr="val">tagged text <fmt><img /></fmt></tag>',
+      );
+    });
   });
 
   group('.of', () {
