@@ -47,6 +47,8 @@ class I18NextOptions with Diagnosticable {
     this.interpolationPrefix,
     this.interpolationSuffix,
     this.formatSeparator,
+    this.interpolationUnescapePrefix,
+    this.interpolationUnescapeSuffix,
     this.formatterValues,
     this.formats,
     this.optionsSeparator,
@@ -70,6 +72,8 @@ class I18NextOptions with Diagnosticable {
     keySeparator: '.',
     interpolationPrefix: '{{',
     interpolationSuffix: '}}',
+    interpolationUnescapePrefix: '-',
+    interpolationUnescapeSuffix: '',
     formatSeparator: ',',
     formatterValues: {
       'true': true,
@@ -146,6 +150,14 @@ class I18NextOptions with Diagnosticable {
   /// - '{{some.variable.name, format1, format2}}'
   /// - '{{some.variable.name, format(option: value)}}'
   final String? interpolationPrefix, interpolationSuffix, formatSeparator;
+
+  /// [interpolationUnescapePrefix] and [interpolationUnescapeSuffix] are used
+  /// to denote that a specific interpolation is not supposed to be [escape]d.
+  ///
+  /// By default they are used with a prefix:
+  /// - '{{-variable}}'
+  /// - '{{-some.variable.name, format1, format2}}'
+  final String? interpolationUnescapePrefix, interpolationUnescapeSuffix;
 
   /// [formats] is called when an interpolation has been found and it was marked
   /// with formatting options.
@@ -233,6 +245,10 @@ class I18NextOptions with Diagnosticable {
       interpolationPrefix: other.interpolationPrefix ?? interpolationPrefix,
       interpolationSuffix: other.interpolationSuffix ?? interpolationSuffix,
       formatSeparator: other.formatSeparator ?? formatSeparator,
+      interpolationUnescapePrefix:
+          other.interpolationUnescapePrefix ?? interpolationUnescapePrefix,
+      interpolationUnescapeSuffix:
+          other.interpolationUnescapeSuffix ?? interpolationUnescapeSuffix,
       formatterValues: other.formatterValues ?? formatterValues,
       formats: formats == null
           ? other.formats
@@ -266,6 +282,8 @@ class I18NextOptions with Diagnosticable {
     String? interpolationPrefix,
     String? interpolationSuffix,
     String? formatSeparator,
+    String? interpolationUnescapePrefix,
+    String? interpolationUnescapeSuffix,
     Map<String, Object>? formatterValues,
     Map<String, ValueFormatter>? formats,
     String? optionsSeparator,
@@ -289,6 +307,10 @@ class I18NextOptions with Diagnosticable {
       interpolationPrefix: interpolationPrefix ?? this.interpolationPrefix,
       interpolationSuffix: interpolationSuffix ?? this.interpolationSuffix,
       formatSeparator: formatSeparator ?? this.formatSeparator,
+      interpolationUnescapePrefix:
+          interpolationUnescapePrefix ?? this.interpolationUnescapePrefix,
+      interpolationUnescapeSuffix:
+          interpolationUnescapeSuffix ?? this.interpolationUnescapeSuffix,
       formatterValues: formatterValues ?? this.formatterValues,
       formats: formats ?? this.formats,
       optionsSeparator: optionsSeparator ?? this.optionsSeparator,
@@ -307,7 +329,7 @@ class I18NextOptions with Diagnosticable {
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => hashList([
         namespaceSeparator,
         contextSeparator,
         pluralSeparator,
@@ -315,6 +337,8 @@ class I18NextOptions with Diagnosticable {
         interpolationPrefix,
         interpolationSuffix,
         formatSeparator,
+        interpolationUnescapePrefix,
+        interpolationUnescapeSuffix,
         formatterValues,
         formats,
         optionsSeparator,
@@ -328,7 +352,7 @@ class I18NextOptions with Diagnosticable {
         translationFailedHandler,
         escape,
         escapeValue,
-      );
+      ]);
 
   @override
   bool operator ==(Object other) {

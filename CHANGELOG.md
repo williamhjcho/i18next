@@ -1,3 +1,10 @@
+# [Next version]
+
+* Adds `I18NextOptions.interpolationUnescapePrefix|interpolationUnescapeSuffix`
+  * They can be used within your localization files to denote an unescaped interpolation like so:
+    * `Some text {{-myVariable}}`
+    * `Some text {{-some.variable, format1, format2}}`
+
 # [0.6.0-dev+2]
 
 * Adds variable (XML) escaping by default

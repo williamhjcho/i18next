@@ -54,35 +54,52 @@ String interpolate(
   Map<String, dynamic> variables,
   I18NextOptions options,
 ) {
-  final pattern = interpolationPattern(options);
   final formatSeparator = options.formatSeparator ?? ',';
   final keySeparator = options.keySeparator ?? '.';
   final escapeValue = options.escapeValue ?? true;
 
-  return string.splitMapJoin(pattern, onMatch: (match) {
-    var variable = match[1]!.trim();
+  final todo = [
+    _InterpolationHelper(
+      interpolationUnescapePattern(options),
+      (input) => input,
+    ),
+    _InterpolationHelper(
+      interpolationPattern(options),
+      escapeValue ? (options.escape ?? escape) : (input) => input,
+    ),
+  ];
 
-    Iterable<String> formats = [];
-    if (variable.contains(formatSeparator)) {
-      final variableParts = variable.split(formatSeparator);
-      variable = variableParts.first.trim();
-      formats = variableParts.skip(1).map((e) => e.trim());
-    }
+  return todo.fold<String>(
+    string,
+    (result, helper) => result.splitMapJoin(helper.pattern, onMatch: (match) {
+      var variable = match[1]!.trim();
 
-    if (variable.isEmpty) {
-      throw InterpolationException('Missing variable', match);
-    }
+      Iterable<String> formats = [];
+      if (variable.contains(formatSeparator)) {
+        final variableParts = variable.split(formatSeparator);
+        variable = variableParts.first.trim();
+        formats = variableParts.skip(1).map((e) => e.trim());
+      }
 
-    final path = variable.split(keySeparator);
-    final value = evaluate(path, variables);
-    var result = formatter.format(value, formats, locale, options) ??
-        (throw InterpolationException(
-            'Could not evaluate or format variable', match));
-    if (escapeValue) {
-      result = (options.escape ?? escape).call(result);
-    }
-    return result;
-  });
+      if (variable.isEmpty) {
+        throw InterpolationException('Missing variable', match);
+      }
+
+      final path = variable.split(keySeparator);
+      final value = evaluate(path, variables);
+      final formatted = formatter.format(value, formats, locale, options) ??
+          (throw InterpolationException(
+              'Could not evaluate or format variable', match));
+      return helper.escape(formatted);
+    }),
+  );
+}
+
+class _InterpolationHelper {
+  _InterpolationHelper(this.pattern, this.escape);
+
+  final RegExp pattern;
+  final EscapeHandler escape;
 }
 
 /// Replaces occurrences of nested key-values in [string] for other
@@ -130,6 +147,21 @@ RegExp interpolationPattern(I18NextOptions options) {
   final prefix = RegExp.escape(options.interpolationPrefix ?? '{{');
   final suffix = RegExp.escape(options.interpolationSuffix ?? '}}');
   return RegExp('$prefix(.*?)$suffix', dotAll: true);
+}
+
+RegExp interpolationUnescapePattern(I18NextOptions options) {
+  final prefix = RegExp.escape(options.interpolationPrefix ?? '{{');
+  final suffix = RegExp.escape(options.interpolationSuffix ?? '}}');
+  final unescapePrefix = RegExp.escape(
+    options.interpolationUnescapePrefix ?? '-',
+  );
+  final unescapeSuffix = RegExp.escape(
+    options.interpolationUnescapeSuffix ?? '',
+  );
+  return RegExp(
+    '$prefix$unescapePrefix(.+?)$unescapeSuffix$suffix',
+    dotAll: true,
+  );
 }
 
 RegExp nestingPattern(I18NextOptions options) {
