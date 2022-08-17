@@ -62,6 +62,7 @@ void main() {
       nestingSuffix: 'Some nestingSuffix',
       nestingSeparator: 'Some nestingSeparator',
       pluralSuffix: 'Some pluralSuffix',
+      escapeValue: true,
     );
 
     test('given no values', () {

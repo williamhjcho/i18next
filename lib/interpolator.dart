@@ -57,6 +57,7 @@ String interpolate(
   final pattern = interpolationPattern(options);
   final formatSeparator = options.formatSeparator ?? ',';
   final keySeparator = options.keySeparator ?? '.';
+  final escapeValue = options.escapeValue ?? true;
 
   return string.splitMapJoin(pattern, onMatch: (match) {
     var variable = match[1]!.trim();
@@ -74,9 +75,13 @@ String interpolate(
 
     final path = variable.split(keySeparator);
     final value = evaluate(path, variables);
-    return formatter.format(value, formats, locale, options) ??
+    var result = formatter.format(value, formats, locale, options) ??
         (throw InterpolationException(
             'Could not evaluate or format variable', match));
+    if (escapeValue) {
+      result = (options.escape ?? escape).call(result);
+    }
+    return result;
   });
 }
 
@@ -137,4 +142,21 @@ RegExp nestingPattern(I18NextOptions options) {
     '($separator\\s*(?<variables>.*?)\\s*)?'
     '$suffix',
   );
+}
+
+String escape(String input) {
+  const _entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+  };
+
+  final pattern = RegExp('[&<>"\'\\/]');
+  return input.replaceAllMapped(pattern, (match) {
+    final char = match[0]!;
+    return _entityMap[char] ?? char;
+  });
 }
