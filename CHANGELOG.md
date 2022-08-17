@@ -1,4 +1,4 @@
-# [Next version]
+# [0.6.0-dev+2]
 
 * Adds variable (XML) escaping by default
   * To override this behavior, set `I18NextOptions.escape`
