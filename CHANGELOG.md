@@ -1,4 +1,4 @@
-# [Next version]
+# [0.6.0-dev+3]
 
 * Adds `I18NextOptions.interpolationUnescapePrefix|interpolationUnescapeSuffix`
   * They can be used within your localization files to denote an unescaped interpolation like so:
