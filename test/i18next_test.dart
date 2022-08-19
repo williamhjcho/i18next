@@ -295,6 +295,13 @@ void main() {
       expect(i18next.t('$namespace:friend', count: 99), '99 friends');
     });
 
+    test('given key with count of another type', () {
+      expect(
+        i18next.t('$namespace:friend', variables: {'count': 'NOT INT'}),
+        'NOT INT friend',
+      );
+    });
+
     test('given key with count in Icelandic (alternate plural rule)', () {
       const ic = Locale('is');
       expect(i18next.t('$namespace:friend', count: 1, locale: ic), '1 vinur');
@@ -373,6 +380,13 @@ void main() {
     test('given key with mapped context', () {
       expect(i18next.t('$namespace:friend', context: 'male'), 'A boyfriend');
       expect(i18next.t('$namespace:friend', context: 'female'), 'A girlfriend');
+    });
+
+    test('given key with context of wrong type', () {
+      expect(
+        i18next.t('$namespace:friend', variables: {'context': 123.45}),
+        'A friend',
+      );
     });
 
     test('given key with mapped context in variables', () {

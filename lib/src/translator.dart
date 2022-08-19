@@ -54,8 +54,8 @@ class Translator {
     Map<String, dynamic> variables,
     I18NextOptions options,
   ) {
-    final context = variables['context'] as String?;
-    final count = variables['count'] as int?;
+    final context = _castAs<String>(variables['context']);
+    final count = _castAs<int>(variables['count']);
     final needsContext = context != null && context.isNotEmpty;
     final needsPlural = count != null;
 
@@ -141,4 +141,10 @@ class Translator {
     }
     return result;
   }
+}
+
+/// Dart casting syntax is not nullable safe
+/// `map['value'] as int?` will throw if the value is non int value
+T? _castAs<T>(dynamic value) {
+  return value is T ? value : null;
 }
