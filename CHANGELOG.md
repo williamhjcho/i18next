@@ -1,3 +1,8 @@
+# [Next version]
+
+* Fix `context` and `count` cast when they are inserted by variables
+  * They will now just be ignored and used for interpolation (if any)
+
 # [0.6.0-dev+3]
 
 * Adds `I18NextOptions.interpolationUnescapePrefix|interpolationUnescapeSuffix`
