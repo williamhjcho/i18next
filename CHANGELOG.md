@@ -1,3 +1,8 @@
+# [0.6.1]
+
+* Adds `orElse` argument to `t()` to provide a fallback value or throw an exception when the translation cannot be found
+* Adds `tOrNull` function that returns null if the translation cannot be found
+
 # [0.6.0]
 
 * Promote 0.6.0-dev+4 to 0.6.0 (stable)
