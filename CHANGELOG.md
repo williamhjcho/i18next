@@ -1,3 +1,7 @@
+# [0.6.0]
+
+* Promote 0.6.0-dev+4 to 0.6.0 (stable)
+
 # [0.6.0-dev+4]
 
 * Fix `context` and `count` cast when they are inserted by variables
