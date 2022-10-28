@@ -787,21 +787,39 @@ void main() {
       const fallback = 'Fallback';
       test('when key is not found', () {
         expect(
-          i18next.t('$namespace:key', orElse: (key) => fallback),
+          i18next.t(
+            '$namespace:key',
+            orElse: expectAsync1((key) {
+              expect(key, '$namespace:key');
+              return fallback;
+            }),
+          ),
           fallback,
         );
       });
       test('when namespace is wrong', () {
         mockKey('key', 'Translation', ns: namespace);
         expect(
-          i18next.t('ns2:key', orElse: (key) => fallback),
+          i18next.t(
+            'ns2:key',
+            orElse: expectAsync1((key) {
+              expect(key, 'ns2:key');
+              return fallback;
+            }),
+          ),
           fallback,
         );
       });
       test('when key is found', () {
         mockKey('key', 'Translation', ns: namespace);
         expect(
-          i18next.t('$namespace:key', orElse: (key) => fallback),
+          i18next.t(
+            '$namespace:key',
+            orElse: expectAsync1((key) {
+              expect(key, '$namespace:key');
+              return fallback;
+            }, count: 0),
+          ),
           'Translation',
         );
       });
@@ -816,7 +834,13 @@ void main() {
         );
         mockKey('key', 'Translation', ns: fallbackNamespace);
         expect(
-          i18next.t('$namespace:key', orElse: (key) => fallback),
+          i18next.t(
+            '$namespace:key',
+            orElse: expectAsync1((key) {
+              expect(key, '$namespace:key');
+              return fallback;
+            }, count: 0),
+          ),
           'Translation',
         );
       });
