@@ -79,6 +79,31 @@ class I18Next {
     int? count,
     Map<String, dynamic>? variables,
     I18NextOptions? options,
+    String Function(String)? orElse,
+  }) {
+    return tOrNull(
+          key,
+          locale: locale,
+          context: context,
+          count: count,
+          variables: variables,
+          options: options,
+        ) ??
+        orElse?.call(key) ??
+        key;
+  }
+
+  /// Attempts to retrieve a translation at [key].
+  /// Returns `null` if the translation cannot be found.
+  ///
+  /// **See also:** [t] for a function that returns a non-nullable [String]
+  String? tOrNull(
+    String key, {
+    Locale? locale,
+    String? context,
+    int? count,
+    Map<String, dynamic>? variables,
+    I18NextOptions? options,
   }) {
     variables ??= {};
     if (context != null) variables['context'] = context;
@@ -93,7 +118,7 @@ class I18Next {
       result =
           newOptions.missingKeyHandler!(locale, key, variables, newOptions);
     }
-    return result ?? key;
+    return result;
   }
 
   /// Returns the localized [I18Next] in the widget tree that corresponds to
