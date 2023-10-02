@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 
 import 'options.dart';
@@ -62,7 +60,7 @@ class I18Next {
   /// - If [variables] are given, they are used as a lookup table when a match
   ///   has been found (delimited by [I18NextOptions.interpolationPrefix] and
   ///   [I18NextOptions.interpolationSuffix]). Before the result is added to
-  ///   the final message, it first goes through [I18NextOptions.formatter].
+  ///   the final message, it first goes through [I18NextOptions.formats].
   /// - If [locale] is given, it overrides the current locale value.
   /// - If [options] is given, it overrides any non-null property over current
   ///   options.
@@ -72,7 +70,34 @@ class I18Next {
   ///
   /// Keys that allow both contextualization and pluralization must be declared
   /// in the order: `key_context_plural`
+  ///
+  /// If a value for [key] is not found, returns the [key] itself.
   String t(
+    String key, {
+    Locale? locale,
+    String? context,
+    int? count,
+    Map<String, dynamic>? variables,
+    I18NextOptions? options,
+    String Function(String)? orElse,
+  }) {
+    return tOrNull(
+          key,
+          locale: locale,
+          context: context,
+          count: count,
+          variables: variables,
+          options: options,
+        ) ??
+        orElse?.call(key) ??
+        key;
+  }
+
+  /// Attempts to retrieve a translation at [key].
+  /// Returns `null` if the translation cannot be found.
+  ///
+  /// **See also:** [t] for a function that returns a non-nullable [String]
+  String? tOrNull(
     String key, {
     Locale? locale,
     String? context,
@@ -87,10 +112,13 @@ class I18Next {
     locale ??= this.locale;
     final newOptions = this.options.merge(options);
 
-    // TODO: when translator fails, allow a fallback behavior (null or throw)
-    return Translator(pluralResolver, resourceStore)
-            .call(key, locale, variables, newOptions) ??
-        key;
+    var result = Translator(pluralResolver, resourceStore)
+        .call(key, locale, variables, newOptions);
+    if (result == null && newOptions.missingKeyHandler != null) {
+      result =
+          newOptions.missingKeyHandler!(locale, key, variables, newOptions);
+    }
+    return result;
   }
 
   /// Returns the localized [I18Next] in the widget tree that corresponds to

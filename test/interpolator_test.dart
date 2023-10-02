@@ -1,12 +1,11 @@
 import 'dart:ui';
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide escape;
 import 'package:i18next/i18next.dart';
 import 'package:i18next/interpolator.dart';
 
 void main() {
   const baseOptions = I18NextOptions.base;
-  const defaultFormatter = I18NextOptions.defaultFormatter;
   const defaultLocale = Locale('en');
 
   group('interpolate', () {
@@ -14,18 +13,23 @@ void main() {
       String string, {
       Map<String, dynamic> variables = const {},
       Locale locale = defaultLocale,
-      ArgumentFormatter? formatter,
+      Map<String, ValueFormatter>? formats,
+      TranslationFailedHandler? translationFailedHandler,
+      EscapeHandler? escape,
     }) {
-      final options = baseOptions.copyWith(formatter: formatter);
+      final options = baseOptions.copyWith(
+        formats: formats,
+        translationFailedHandler: translationFailedHandler,
+        escape: escape,
+      );
       return interpolate(locale, string, variables, options);
     }
 
+    final throwsInterpolationException = throwsA(isA<InterpolationException>());
+
     test('given a non matching string', () {
       expect(
-        interpol(
-          'This is a normal string',
-          formatter: expectAsync3(defaultFormatter, count: 0),
-        ),
+        interpol('This is a normal string'),
         'This is a normal string',
       );
     });
@@ -33,22 +37,17 @@ void main() {
     group('given a matching string', () {
       test('without variable or format', () {
         expect(
-          interpol(
-            'This is a {{}} string',
-            formatter: expectAsync3(defaultFormatter, count: 0),
-          ),
-          'This is a {{}} string',
+          () => interpol('This is a {{}} string'),
+          throwsInterpolationException,
         );
       });
 
       group('with variable only', () {
         test('without variables', () {
+          const string = 'This is a {{variable}} string';
           expect(
-            interpol(
-              'This is a {{variable}} string',
-              formatter: expectAsync3(defaultFormatter, count: 0),
-            ),
-            'This is a {{variable}} string',
+            () => interpol(string),
+            throwsInterpolationException,
           );
         });
 
@@ -57,14 +56,8 @@ void main() {
             interpol(
               'This is a {{variable}} string',
               variables: {'variable': 'my variable'},
-              formatter: expectAsync3((variable, format, locale) {
-                expect(variable, 'my variable');
-                expect(format, isNull);
-                expect(locale, defaultLocale);
-                return 'VALUE';
-              }),
             ),
-            'This is a VALUE string',
+            'This is a my variable string',
           );
         });
 
@@ -84,51 +77,113 @@ void main() {
 
         test('with partially matching replaceable grouped variables', () {
           expect(
-            interpol(
+            () => interpol(
               'This is a {{grouped.key.variable}} string',
               variables: {
                 'grouped': {'key': 'grouped variable'}
               },
             ),
-            'This is a {{grouped.key.variable}} string',
+            throwsInterpolationException,
           );
         });
 
         test('without replaceable variables', () {
           expect(
-            interpol(
+            () => interpol(
               'This is a {{variable}} string',
               variables: {'another': 'value'},
-              formatter: expectAsync3(defaultFormatter, count: 0),
             ),
-            'This is a {{variable}} string',
+            throwsInterpolationException,
           );
         });
       });
 
       test('with format only', () {
         expect(
-          interpol(
-            'This is a {{, some format}} string',
-            formatter: expectAsync3(defaultFormatter, count: 0),
-          ),
-          'This is a {{, some format}} string',
+          () => interpol('This is a {{, some format}} string'),
+          throwsInterpolationException,
         );
       });
 
-      test('with variable and format and replaceable variables', () {
-        expect(
-          interpol(
-            'This is a {{variable, format}} string',
-            variables: {'variable': 'my variable'},
-            formatter: expectAsync3((variable, format, locale) {
-              expect(variable, 'my variable');
-              expect(format, 'format');
-              expect(locale, defaultLocale);
-              return 'VALUE';
-            }),
-          ),
-          'This is a VALUE string',
+      group('with both variable and format ', () {
+        test('where variable is replaced and formatted', () {
+          expect(
+            interpol(
+              'This is a {{variable, format}} string',
+              variables: {'variable': 'my variable'},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) {
+                    expect(variable, 'my variable');
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
+                    expect(locale, defaultLocale);
+                    return 'VALUE';
+                  },
+                ),
+              },
+            ),
+            'This is a VALUE string',
+          );
+        });
+
+        test('where variable is replaced and formatter returns null', () {
+          expect(
+            () => interpol(
+              'This is a {{variable, format}} string',
+              variables: {'variable': 'my variable'},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) {
+                    expect(variable, 'my variable');
+                    expect(format.name, 'format');
+                    expect(format.options, isEmpty);
+                    expect(locale, defaultLocale);
+                    return null;
+                  },
+                ),
+              },
+            ),
+            throwsInterpolationException,
+          );
+        });
+
+        test('without a replaceable variable', () {
+          expect(
+            interpol(
+              'This is a {{variable, format}} string',
+              variables: {},
+              formats: {
+                'format': expectAsync4(
+                  (variable, format, locale, options) => 'VALUE',
+                ),
+              },
+            ),
+            'This is a VALUE string',
+          );
+        });
+
+        test(
+          'with multiple formats, and only the last format returns a value',
+          () {
+            expect(
+              interpol(
+                'This is a {{variable, fmt1, fmt2, fmt3}} string',
+                formats: {
+                  'fmt1': expectAsync4(
+                    (variable, format, locale, options) => null,
+                  ),
+                  'fmt2': expectAsync4(
+                    (variable, format, locale, options) => null,
+                  ),
+                  'fmt3': expectAsync4(
+                    (variable, format, locale, options) => 'VALUE',
+                  ),
+                },
+              ),
+              'This is a VALUE string',
+            );
+          },
         );
       });
 
@@ -139,14 +194,22 @@ void main() {
             'This is a {{variable}} string',
             locale: anotherLocale,
             variables: {'variable': 'my variable'},
-            formatter: expectAsync3((variable, format, locale) {
-              expect(variable, 'my variable');
-              expect(format, isNull);
-              expect(locale, anotherLocale);
-              return 'VALUE';
+          ),
+          'This is a my variable string',
+        );
+      });
+
+      test('given escape', () {
+        expect(
+          interpol(
+            'This is a {{variable}} string',
+            variables: {'variable': '<tag>my variable</tag>'},
+            escape: expectAsync1((input) {
+              expect(input, '<tag>my variable</tag>');
+              return 'ESCAPED VAR';
             }),
           ),
-          'This is a VALUE string',
+          'This is a ESCAPED VAR string',
         );
       });
     });
@@ -163,11 +226,17 @@ void main() {
       return nest(locale, string, translate, variables, options);
     }
 
+    final throwsNestingException = throwsA(isA<NestingException>());
+
+    Translate noTranslateCalls() =>
+        expectAsync4((key, a, b, c) => fail('Should not have been called'),
+            count: 0);
+
     test('given a non matching string', () {
       expect(
         nst(
           'This is my unmatching string',
-          translate: expectAsync4(_defaultTranslate, count: 0),
+          translate: noTranslateCalls(),
         ),
         'This is my unmatching string',
       );
@@ -176,11 +245,11 @@ void main() {
     group('given a nesting string', () {
       test('without key or variables', () {
         expect(
-          nst(
+          () => nst(
             r'This is my $t() string',
-            translate: expectAsync4(_defaultTranslate, count: 0),
+            translate: noTranslateCalls(),
           ),
-          r'This is my $t() string',
+          throwsNestingException,
         );
       });
 
@@ -199,11 +268,11 @@ void main() {
 
       test('with variables only', () {
         expect(
-          nst(
+          () => nst(
             r'This is my $t(, {"x": "y"}) string',
-            translate: expectAsync4(_defaultTranslate, count: 0),
+            translate: noTranslateCalls(),
           ),
-          r'This is my $t(, {"x": "y"}) string',
+          throwsNestingException,
         );
       });
 
@@ -247,30 +316,22 @@ void main() {
 
         test('when variables are a malformed json', () {
           expect(
-            nst(
+            () => nst(
               r'This is my $t(key, "x") string',
-              translate: expectAsync4((key, b, variables, d) {
-                expect(key, 'key');
-                expect(variables, isEmpty);
-                return 'VALUE';
-              }),
+              translate: noTranslateCalls(),
             ),
-            r'This is my VALUE string',
+            throwsA(isA<TypeError>()),
           );
         });
       });
 
       test('with multiple split points', () {
         expect(
-          nst(
+          () => nst(
             r'This is my $t(key, {"a":"a"}, {"b":"b"}) string',
-            translate: expectAsync4((key, b, variables, d) {
-              expect(key, 'key');
-              expect(variables, isEmpty);
-              return 'VALUE';
-            }),
+            translate: noTranslateCalls(),
           ),
-          r'This is my VALUE string',
+          throwsFormatException,
         );
       });
 
@@ -292,57 +353,78 @@ void main() {
         );
       });
     });
+
+    group('with multiple nestings', () {
+      test('and both succeed', () {
+        final returnValues = {
+          'key': 'VALUE',
+          'anotherKey': 'ANOTHER VALUE',
+        };
+
+        expect(
+          nst(
+            r'This is my $t(key) and $t(anotherKey, {"a":"A"}) string',
+            translate: (key, b, c, d) => returnValues[key],
+          ),
+          r'This is my VALUE and ANOTHER VALUE string',
+        );
+      });
+
+      test('and one fails', () {
+        expect(
+          () => nst(
+            r'This is my $t(key) and $t(unknown) string',
+            translate: (key, b, c, d) => key == 'key' ? 'VALUE' : null,
+          ),
+          throwsNestingException,
+        );
+      });
+    });
   });
 
   group('interpolationPattern', () {
     final pattern = interpolationPattern(baseOptions);
 
-    Iterable<List<String?>> allMatches(String text) =>
-        pattern.allMatches(text).map((match) => [
-              match.namedGroup('variable'),
-              match.namedGroup('format'),
-            ]);
+    Iterable<String?> allMatches(String text) =>
+        pattern.allMatches(text).map((match) => match.group(1));
 
     test('default pattern', () {
-      expect(
-        pattern.pattern,
-        r'\{\{(?<variable>.*?)(,\s*(?<format>.*?)\s*)?\}\}',
-      );
+      expect(pattern.pattern, r'\{\{(.*?)\}\}');
     });
 
     test('when has only one match without format', () {
-      expect(allMatches('My text has {{one}} match'), [
-        ['one', null]
-      ]);
+      expect(allMatches('My text has {{one}} match'), ['one']);
     });
 
     test('when has only one match with format', () {
-      expect(allMatches('My text has {{one, Xyz}} match'), [
-        ['one', 'Xyz']
-      ]);
+      expect(allMatches('My text has {{one, Xyz}} match'), ['one, Xyz']);
     });
 
     test('when has only one match with format with whitespaces', () {
-      expect(allMatches('My text has {{one,   Xyz}} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one, Xyz   }} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one,    Xyz   }} match'), [
-        ['one', 'Xyz']
-      ]);
-      expect(allMatches('My text has {{one, \nXyz\n}} match'), [
-        ['one', 'Xyz']
-      ]);
+      expect(
+        allMatches('My text has {{one,   Xyz}} match'),
+        ['one,   Xyz'],
+      );
+      expect(
+        allMatches('My text has {{one, Xyz   }} match'),
+        ['one, Xyz   '],
+      );
+      expect(
+        allMatches('My text has {{one,    Xyz   }} match'),
+        ['one,    Xyz   '],
+      );
+      expect(
+        allMatches('My text has {{one, \nXyz\n}} match'),
+        ['one, \nXyz\n'],
+      );
     });
 
     test('when has multiple matches without formats', () {
       expect(allMatches('My {{text}} {{has}} {{four}} {{matches}}'), [
-        ['text', null],
-        ['has', null],
-        ['four', null],
-        ['matches', null]
+        'text',
+        'has',
+        'four',
+        'matches',
       ]);
     });
 
@@ -351,12 +433,7 @@ void main() {
         allMatches(
           'My {{text, Aaa}} {{has, Bbb}} {{four, Ccc}} {{matches, Ddd}}',
         ),
-        [
-          ['text', 'Aaa'],
-          ['has', 'Bbb'],
-          ['four', 'Ccc'],
-          ['matches', 'Ddd']
-        ],
+        ['text, Aaa', 'has, Bbb', 'four, Ccc', 'matches, Ddd'],
       );
     });
 
@@ -364,13 +441,7 @@ void main() {
       final matches = allMatches(
         'My {{text}} {{has, Bbb}} {{four, Ccc}} {{matches}}',
       );
-
-      expect(matches, [
-        ['text', null],
-        ['has', 'Bbb'],
-        ['four', 'Ccc'],
-        ['matches', null]
-      ]);
+      expect(matches, ['text', 'has, Bbb', 'four, Ccc', 'matches']);
     });
   });
 
@@ -452,6 +523,50 @@ void main() {
         ['matches', null]
       ]);
     });
+  });
+
+  group('interpolationEscapePattern', () {
+    final pattern = interpolationUnescapePattern(baseOptions);
+
+    Iterable<String?> allMatches(String text) =>
+        pattern.allMatches(text).map((match) => match.group(1));
+
+    test('default pattern', () {
+      expect(pattern.pattern, r'\{\{-(.+?)\}\}');
+    });
+
+    test('when no matches', () {
+      expect(allMatches(''), []);
+      expect(allMatches('no matches'), []);
+      expect(allMatches('Some {{asd}}'), []);
+    });
+
+    test('when matches', () {
+      expect(allMatches('Some {{-value}}'), ['value']);
+      expect(allMatches('Some {{- value}}'), [' value']);
+      expect(allMatches('Some {{-   value}}'), ['   value']);
+
+      expect(allMatches('Some {{-value, fmt}}'), ['value, fmt']);
+      expect(allMatches('Some {{- value, fmt}}'), [' value, fmt']);
+      expect(allMatches('Some {{-   value, fmt}}'), ['   value, fmt']);
+
+      expect(allMatches('Some {{-value, fmt}} {{unescaped}}'), ['value, fmt']);
+    });
+  });
+
+  test('escape', () {
+    expect(escape(''), '');
+    expect(escape('&'), '&amp;');
+    expect(escape('<'), '&lt;');
+    expect(escape('>'), '&gt;');
+    expect(escape('"'), '&quot;');
+    expect(escape('\''), '&#39;');
+    expect(escape('/'), '&#x2F;');
+
+    expect(
+      escape('<tag attr="value">Some text</tag>'),
+      '&lt;tag attr=&quot;value&quot;&gt;Some text&lt;&#x2F;tag&gt;',
+    );
   });
 }
 

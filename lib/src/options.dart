@@ -1,12 +1,40 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
-typedef ArgumentFormatter = String Function(
-  Object value,
-  String? format,
+import 'interpolation_format.dart';
+
+// ignore_for_file: lines_longer_than_80_chars
+
+/// The formatter signature for [I18NextOptions.formats].
+///
+/// The [value] can be null if the variable wasn't evaluated properly, giving a
+/// chance for the formatter to do something
+typedef ValueFormatter = Object? Function(
+  Object? value,
+  InterpolationFormat format,
   Locale locale,
+  I18NextOptions options,
 );
+
+typedef MissingKeyHandler = String? Function(
+  Locale locale,
+  String key,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
+);
+
+typedef TranslationFailedHandler = String Function(
+  Locale locale,
+  String namespace,
+  String key,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
+  Object error,
+);
+
+typedef EscapeHandler = String Function(String input);
 
 /// Contains all options for [I18Next] to work properly.
 class I18NextOptions with Diagnosticable {
@@ -18,12 +46,22 @@ class I18NextOptions with Diagnosticable {
     this.keySeparator,
     this.interpolationPrefix,
     this.interpolationSuffix,
-    this.interpolationSeparator,
+    this.formatSeparator,
+    this.interpolationUnescapePrefix,
+    this.interpolationUnescapeSuffix,
+    this.formatterValues,
+    this.formats,
+    this.optionsSeparator,
+    this.optionValueSeparator,
     this.nestingPrefix,
     this.nestingSuffix,
     this.nestingSeparator,
     this.pluralSuffix,
-    this.formatter,
+    this.missingKeyHandler,
+    this.missingInterpolationHandler,
+    this.translationFailedHandler,
+    this.escape,
+    this.escapeValue,
   }) : super();
 
   static const I18NextOptions base = I18NextOptions(
@@ -34,12 +72,25 @@ class I18NextOptions with Diagnosticable {
     keySeparator: '.',
     interpolationPrefix: '{{',
     interpolationSuffix: '}}',
-    interpolationSeparator: ',',
+    interpolationUnescapePrefix: '-',
+    interpolationUnescapeSuffix: '',
+    formatSeparator: ',',
+    formatterValues: {
+      'true': true,
+      'false': false,
+    },
+    formats: {},
+    optionsSeparator: ';',
+    optionValueSeparator: ':',
     nestingPrefix: r'$t(',
     nestingSuffix: ')',
     nestingSeparator: ',',
     pluralSuffix: 'plural',
-    formatter: defaultFormatter,
+    missingKeyHandler: null,
+    missingInterpolationHandler: null,
+    translationFailedHandler: null,
+    escape: null,
+    escapeValue: true,
   );
 
   /// The namespaces used to fallback to when no key matches were found on the
@@ -90,17 +141,48 @@ class I18NextOptions with Diagnosticable {
   /// By default they are '{{' and '}}' respectively and can't be null but
   /// can be empty.
   ///
-  /// [interpolationSeparator] is used to separate the variable's
+  /// [formatSeparator] is used to separate the variable's
   /// name from the format (if any). Defaults to ',' and cannot be null nor
   /// empty (otherwise it'll match every char in the interpolation).
   ///
-  /// ```
-  /// - '{{title}}' name = 'title, format = null
-  /// - '{{title, uppercase}}' name = 'title', format = 'uppercase'
-  /// ```
-  final String? interpolationPrefix,
-      interpolationSuffix,
-      interpolationSeparator;
+  /// - '{{title}}'
+  /// - '{{some.variable.name}}'
+  /// - '{{some.variable.name, format1, format2}}'
+  /// - '{{some.variable.name, format(option: value)}}'
+  final String? interpolationPrefix, interpolationSuffix, formatSeparator;
+
+  /// [interpolationUnescapePrefix] and [interpolationUnescapeSuffix] are used
+  /// to denote that a specific interpolation is not supposed to be [escape]d.
+  ///
+  /// By default they are used with a prefix:
+  /// - '{{-variable}}'
+  /// - '{{-some.variable.name, format1, format2}}'
+  final String? interpolationUnescapePrefix, interpolationUnescapeSuffix;
+
+  /// [formats] is called when an interpolation has been found and it was marked
+  /// with formatting options.
+  ///
+  /// If the format doesn't exist then it either moves to the next format or
+  /// the value is returned as is (in string form: [Object.toString]).
+  final Map<String, ValueFormatter>? formats;
+
+  /// Helper that maps known or common [formats] values to a specific value.
+  ///
+  /// e.g.:
+  /// `{{formatName(option: true)}}`
+  /// Maps the "true" string to a bool value while parsing.
+  final Map<String, Object>? formatterValues;
+
+  /// Options are delimited for the [formats], and are defined
+  /// between '(' and ')'.
+  ///
+  /// [optionsSeparator] separates all the available options between the
+  /// prefix and suffix, while the [optionValueSeparator] separates the key
+  /// values for each option.
+  ///
+  /// "Some format {{value, formatName(optionName: optionValue)}}",
+  /// "Some format {{value, formatName(option1Name: option1Value; option2Name: option2Value)}}"
+  final String? optionsSeparator, optionValueSeparator;
 
   /// [nestingPrefix] and [nestingSuffix] are the deliminators for nesting
   /// mechanism. By default they are '$t(' and ')' respectively and can't be
@@ -119,12 +201,33 @@ class I18NextOptions with Diagnosticable {
   /// ```
   final String? nestingPrefix, nestingSuffix, nestingSeparator;
 
-  /// [formatter] is called when an interpolation has been found and is ready
-  /// for substitution.
+  /// The default behavior is to just return the key itself that was used in
+  /// [I18Next.t].
+  final MissingKeyHandler? missingKeyHandler;
+
+  /// Called when the interpolation format in [formats] is not found, or when
+  /// the value being interpolated is not a [String].
   ///
-  /// Defaults to [defaultFormatter], which simply returns the value itself in
-  /// String form ([Object.toString]).
-  final ArgumentFormatter? formatter;
+  /// The default behavior just returns the value itself (which will fallback
+  /// into a [Object.toString] call.
+  final ValueFormatter? missingInterpolationHandler;
+
+  /// A callback that is used when the translation failed while being evaluated
+  /// (e.g. interpolation, nesting).
+  ///
+  /// If the key was missing, then it will call [missingKeyHandler] instead.
+  final TranslationFailedHandler? translationFailedHandler;
+
+  /// The escape handler that is called after interpolating and formatting a
+  /// variable only if [escapeValue] is enabled.
+  ///
+  /// By default will escape XML tags.
+  final EscapeHandler? escape;
+
+  /// Whether to call [escape] after interpolating and formatting a variable.
+  ///
+  /// Default is true.
+  final bool? escapeValue;
 
   /// Creates a new instance of [I18NextOptions] overriding any properties
   /// where [other] isn't null.
@@ -141,12 +244,29 @@ class I18NextOptions with Diagnosticable {
       pluralSuffix: other.pluralSuffix ?? pluralSuffix,
       interpolationPrefix: other.interpolationPrefix ?? interpolationPrefix,
       interpolationSuffix: other.interpolationSuffix ?? interpolationSuffix,
-      interpolationSeparator:
-          other.interpolationSeparator ?? interpolationSeparator,
+      formatSeparator: other.formatSeparator ?? formatSeparator,
+      interpolationUnescapePrefix:
+          other.interpolationUnescapePrefix ?? interpolationUnescapePrefix,
+      interpolationUnescapeSuffix:
+          other.interpolationUnescapeSuffix ?? interpolationUnescapeSuffix,
+      formatterValues: other.formatterValues ?? formatterValues,
+      formats: formats == null
+          ? other.formats
+          : other.formats == null
+              ? formats
+              : {...?formats, ...?other.formats},
+      optionsSeparator: other.optionsSeparator ?? optionsSeparator,
+      optionValueSeparator: other.optionValueSeparator ?? optionValueSeparator,
       nestingPrefix: other.nestingPrefix ?? nestingPrefix,
       nestingSuffix: other.nestingSuffix ?? nestingSuffix,
       nestingSeparator: other.nestingSeparator ?? nestingSeparator,
-      formatter: other.formatter ?? formatter,
+      missingKeyHandler: other.missingKeyHandler ?? missingKeyHandler,
+      missingInterpolationHandler:
+          other.missingInterpolationHandler ?? missingInterpolationHandler,
+      translationFailedHandler:
+          other.translationFailedHandler ?? translationFailedHandler,
+      escape: other.escape ?? escape,
+      escapeValue: other.escapeValue ?? escapeValue,
     );
   }
 
@@ -161,11 +281,21 @@ class I18NextOptions with Diagnosticable {
     String? pluralSuffix,
     String? interpolationPrefix,
     String? interpolationSuffix,
-    String? interpolationSeparator,
+    String? formatSeparator,
+    String? interpolationUnescapePrefix,
+    String? interpolationUnescapeSuffix,
+    Map<String, Object>? formatterValues,
+    Map<String, ValueFormatter>? formats,
+    String? optionsSeparator,
+    String? optionValueSeparator,
     String? nestingPrefix,
     String? nestingSuffix,
     String? nestingSeparator,
-    ArgumentFormatter? formatter,
+    MissingKeyHandler? missingKeyHandler,
+    ValueFormatter? missingInterpolationHandler,
+    TranslationFailedHandler? translationFailedHandler,
+    EscapeHandler? escape,
+    bool? escapeValue,
   }) {
     return I18NextOptions(
       fallbackNamespaces: fallbackNamespaces ?? this.fallbackNamespaces,
@@ -176,48 +306,81 @@ class I18NextOptions with Diagnosticable {
       pluralSuffix: pluralSuffix ?? this.pluralSuffix,
       interpolationPrefix: interpolationPrefix ?? this.interpolationPrefix,
       interpolationSuffix: interpolationSuffix ?? this.interpolationSuffix,
-      interpolationSeparator:
-          interpolationSeparator ?? this.interpolationSeparator,
+      formatSeparator: formatSeparator ?? this.formatSeparator,
+      interpolationUnescapePrefix:
+          interpolationUnescapePrefix ?? this.interpolationUnescapePrefix,
+      interpolationUnescapeSuffix:
+          interpolationUnescapeSuffix ?? this.interpolationUnescapeSuffix,
+      formatterValues: formatterValues ?? this.formatterValues,
+      formats: formats ?? this.formats,
+      optionsSeparator: optionsSeparator ?? this.optionsSeparator,
+      optionValueSeparator: optionValueSeparator ?? this.optionValueSeparator,
       nestingPrefix: nestingPrefix ?? this.nestingPrefix,
       nestingSuffix: nestingSuffix ?? this.nestingSuffix,
       nestingSeparator: nestingSeparator ?? this.nestingSeparator,
-      formatter: formatter ?? this.formatter,
+      missingKeyHandler: missingKeyHandler ?? this.missingKeyHandler,
+      missingInterpolationHandler:
+          missingInterpolationHandler ?? this.missingInterpolationHandler,
+      translationFailedHandler:
+          translationFailedHandler ?? this.translationFailedHandler,
+      escape: escape ?? this.escape,
+      escapeValue: escapeValue ?? this.escapeValue,
     );
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => hashList([
         namespaceSeparator,
         contextSeparator,
         pluralSeparator,
         keySeparator,
         interpolationPrefix,
         interpolationSuffix,
-        interpolationSeparator,
+        formatSeparator,
+        interpolationUnescapePrefix,
+        interpolationUnescapeSuffix,
+        formatterValues,
+        formats,
+        optionsSeparator,
+        optionValueSeparator,
         nestingPrefix,
         nestingSuffix,
         nestingSeparator,
         pluralSuffix,
-        formatter,
-      );
+        missingKeyHandler,
+        missingInterpolationHandler,
+        translationFailedHandler,
+        escape,
+        escapeValue,
+      ]);
 
   @override
-  bool operator ==(Object other) =>
-      other.runtimeType == runtimeType &&
-      other is I18NextOptions &&
-      other.fallbackNamespaces == fallbackNamespaces &&
-      other.namespaceSeparator == namespaceSeparator &&
-      other.contextSeparator == contextSeparator &&
-      other.pluralSeparator == pluralSeparator &&
-      other.keySeparator == keySeparator &&
-      other.interpolationPrefix == interpolationPrefix &&
-      other.interpolationSuffix == interpolationSuffix &&
-      other.interpolationSeparator == interpolationSeparator &&
-      other.nestingPrefix == nestingPrefix &&
-      other.nestingSuffix == nestingSuffix &&
-      other.nestingSeparator == nestingSeparator &&
-      other.pluralSuffix == pluralSuffix &&
-      other.formatter == formatter;
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other.runtimeType == runtimeType &&
+        other is I18NextOptions &&
+        other.fallbackNamespaces == fallbackNamespaces &&
+        other.namespaceSeparator == namespaceSeparator &&
+        other.contextSeparator == contextSeparator &&
+        other.pluralSeparator == pluralSeparator &&
+        other.keySeparator == keySeparator &&
+        other.interpolationPrefix == interpolationPrefix &&
+        other.interpolationSuffix == interpolationSuffix &&
+        other.formatSeparator == formatSeparator &&
+        other.formatterValues == formatterValues &&
+        const MapEquality().equals(other.formats, formats) &&
+        other.optionsSeparator == optionsSeparator &&
+        other.optionValueSeparator == optionValueSeparator &&
+        other.nestingPrefix == nestingPrefix &&
+        other.nestingSuffix == nestingSuffix &&
+        other.nestingSeparator == nestingSeparator &&
+        other.pluralSuffix == pluralSuffix &&
+        other.missingKeyHandler == missingKeyHandler &&
+        other.missingInterpolationHandler == missingInterpolationHandler &&
+        other.translationFailedHandler == translationFailedHandler &&
+        other.escape == escape &&
+        other.escapeValue == escapeValue;
+  }
 
   @override
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
@@ -230,15 +393,21 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('keySeparator', keySeparator))
       ..add(StringProperty('interpolationPrefix', interpolationPrefix))
       ..add(StringProperty('interpolationSuffix', interpolationSuffix))
-      ..add(StringProperty('interpolationSeparator', interpolationSeparator))
+      ..add(StringProperty('formatSeparator', formatSeparator))
+      ..add(StringProperty('formatterValues', formatterValues?.toString()))
+      ..add(StringProperty('formats', formats?.toString()))
+      ..add(StringProperty('optionsSeparator', optionsSeparator))
+      ..add(StringProperty('optionValueSeparator', optionValueSeparator))
       ..add(StringProperty('nestingPrefix', nestingPrefix))
       ..add(StringProperty('nestingSuffix', nestingSuffix))
       ..add(StringProperty('nestingSeparator', nestingSeparator))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
-      ..add(StringProperty('formatter', '$formatter'));
+      ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
+      ..add(StringProperty('missingInterpolationHandler',
+          missingInterpolationHandler?.toString()))
+      ..add(StringProperty(
+          'translationFailedHandler', translationFailedHandler?.toString()))
+      ..add(StringProperty('escape', escape?.toString()))
+      ..add(StringProperty('escapeValue', escapeValue?.toString()));
   }
-
-  /// Simply returns [value] in string form. Ignores [format] and [locale].
-  static String defaultFormatter(Object value, String? format, Locale locale) =>
-      value.toString();
 }

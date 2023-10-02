@@ -1,3 +1,75 @@
+# [0.6.1]
+
+* Adds `orElse` argument to `t()` to provide a fallback value or throw an exception when the translation cannot be found
+* Adds `tOrNull` function that returns null if the translation cannot be found
+
+# [0.6.0]
+
+* Promote 0.6.0-dev+4 to 0.6.0 (stable)
+
+# [0.6.0-dev+4]
+
+* Fix `context` and `count` cast when they are inserted by variables
+  * They will now just be ignored and used for interpolation (if any)
+
+# [0.6.0-dev+3]
+
+* Adds `I18NextOptions.interpolationUnescapePrefix|interpolationUnescapeSuffix`
+  * They can be used within your localization files to denote an unescaped interpolation like so:
+    * `Some text {{-myVariable}}`
+    * `Some text {{-some.variable, format1, format2}}`
+
+# [0.6.0-dev+2]
+
+* Adds variable (XML) escaping by default
+  * To override this behavior, set `I18NextOptions.escape`
+  * Or to disable it, set `I18NextOptions.escapeValue = false`
+
+# [0.6.0-dev+1]
+
+* Fix `missingInterpolationHandler` to also be called for interpolations that do not result into String (and are not null)
+  e.g. `{{someVar}}` with no formats
+
+# [0.6.0-dev]
+
+* Adds `AssetBundleLocalizationDataSource.cache` property (default is still true)
+* Adds name arguments to the typedefs
+* Refactors: `interpolation` and `nesting` methods with dedicated `Exceptions` while running `splitMapJoin`
+  * The final result is still the same, if either interpolation or nesting fails, the translator will fallback to null,
+    which in turn is converted back into the original key.
+  * Also, json deserialization issues on `nesting` now fail, rather than silently recovering
+* Fixes immediate key recursion after nesting
+* Moves `I18NextOptions.defaultFormatter` as an internal `interpolator.dart` method.
+* Adds `MissingKeyHandler` and `TranslationFailedHandler` on `I18NextOptions` to allow custom handling if needed
+  (default behavior is to return the key itself).
+* Refactors formatters **BREAKING CHANGE**:
+  * Now the formatters are registered by name rather than just by a single function:
+    ```dart
+    I18NextOptions(formats: {
+      'uppercase': (variable, variableOptions, locale, options) => variable?.toUpperCase(),
+      'lowercase': (variable, variableOptions, locale, options) => variable?.toUpperCase(),
+      // (...)
+    });
+    ```
+    The callback of the formatter may receive and return a null value so the next formats may have a chance to handle it
+    before returning to the interpolation call. Which if it is still null, will be considered a translation error, resulting 
+    in the original key being returned.
+    ```
+    "key": "Hello {{name, uppercase}}!" // "Hello WORLD!"
+    
+    // multiple formatters in sequence
+    "key": "Hello {{name, fmt1, fmt2, fmt3}}!" 
+    ```
+    And they also accept options if the format needs them:
+    ```json
+    {
+      "key": "Some format {{value, formatName}}",
+      "keyWithOptions": "Some format {{value, formatName(option1Name: option1Value; option2Name: option2Value)}}"
+    }
+    ```
+  * Also adds a `I18NextOptions.missingInterpolationHandler` that can also be used as the previous implementation,
+    to avoid a full migration if needed.
+
 ## [0.5.2]
 
 * Fix: Unnecessary reloads of the localizationDataSource

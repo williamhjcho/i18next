@@ -30,7 +30,8 @@ class Translator {
       namespace = key.substring(0, match.start);
       keyPath = key.substring(match.end);
     }
-    return translateKey(locale, namespace ?? '', keyPath, variables, options);
+    namespace ??= '';
+    return translateKey(locale, namespace, keyPath, variables, options);
   }
 
   /// Order of key resolution:
@@ -53,8 +54,8 @@ class Translator {
     Map<String, dynamic> variables,
     I18NextOptions options,
   ) {
-    final context = variables['context'] as String?;
-    final count = variables['count'] as int?;
+    final context = _castAs<String>(variables['context']);
+    final count = _castAs<int>(variables['count']);
     final needsContext = context != null && context.isNotEmpty;
     final needsPlural = count != null;
 
@@ -82,14 +83,26 @@ class Translator {
 
     for (final currentNamespace in namespaces) {
       for (final currentKey in keys.reversed) {
-        final found = find(
-          locale,
-          currentNamespace,
-          currentKey,
-          variables,
-          options,
-        );
-        if (found != null) return found;
+        // TODO: translation context object
+        try {
+          final found = find(
+            locale,
+            currentNamespace,
+            currentKey,
+            variables,
+            options,
+          );
+          if (found != null) return found;
+        } catch (error) {
+          return options.translationFailedHandler?.call(
+            locale,
+            currentNamespace,
+            currentKey,
+            variables,
+            options,
+            error,
+          );
+        }
       }
     }
     return null;
@@ -106,17 +119,32 @@ class Translator {
     Map<String, dynamic> variables,
     I18NextOptions options,
   ) {
-    final value = resourceStore.retrieve(locale, namespace, key, options);
-    String? result;
-    if (value != null) {
-      result = interpolator.interpolate(locale, value, variables, options);
+    var result = resourceStore.retrieve(locale, namespace, key, options);
+    if (result != null) {
+      result = interpolator.interpolate(locale, result, variables, options);
       result = interpolator.nest(
-          locale,
-          result,
-          Translator(pluralResolver, resourceStore, namespace),
-          variables,
-          options);
+        locale,
+        result,
+        (currentKey, locale, newVariables, options) {
+          // nesting a potentially recursive key
+          if (currentKey == key &&
+              newVariables['context'] == variables['context']) {
+            return null;
+          }
+
+          return Translator(pluralResolver, resourceStore, namespace)
+              .call(currentKey, locale, newVariables, options);
+        },
+        variables,
+        options,
+      );
     }
     return result;
   }
+}
+
+/// Dart casting syntax is not nullable safe
+/// `map['value'] as int?` will throw if the value is non int value
+T? _castAs<T>(dynamic value) {
+  return value is T ? value : null;
 }

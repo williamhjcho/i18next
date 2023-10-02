@@ -1,24 +1,49 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'src/formatter.dart' as formatter;
 import 'src/options.dart';
 import 'utils.dart';
 
 typedef Translate = String? Function(
-  String,
-  Locale,
-  Map<String, dynamic>,
-  I18NextOptions,
+  String key,
+  Locale locale,
+  Map<String, dynamic> variables,
+  I18NextOptions options,
 );
+
+/// Exception thrown when the [interpolate] fails while processing
+/// for either not containing a variable or with malformed or
+/// incoherent evaluations.
+class InterpolationException implements Exception {
+  InterpolationException(this.message, this.match);
+
+  final String message;
+  final Match match;
+
+  @override
+  String toString() => 'InterpolationException: $message in "${match[0]}"';
+}
+
+/// Exception thrown when the [nest] fails while processing
+class NestingException implements Exception {
+  NestingException(this.message, this.match);
+
+  final String message;
+  final Match match;
+
+  @override
+  String toString() => 'NestingException: $message in "${match[0]}"';
+}
 
 /// Replaces occurrences of matches in [string] for the named values
 /// in [options] (if they exist), by first passing through the
-/// [I18NextOptions.formatter] before joining the resulting string.
+/// [I18NextOptions.formats] before joining the resulting string.
 ///
 /// - 'Hello {{name}}' + {name: 'World'} -> 'Hello World'.
 ///   This example illustrates a simple interpolation.
 /// - 'Now is {{date, dd/MM}}' + {date: DateTime.now()} -> 'Now is 23/09'.
-///   In this example, [I18NextOptions.formatter] must be able to
+///   In this example, [I18NextOptions.formats] must be able to
 ///   properly format the date.
 /// - 'A string with {{grouped.key}}' + {'grouped': {'key': "grouped keys}} ->
 ///   'A string with grouped keys'. In this example the variables are in the
@@ -29,31 +54,52 @@ String interpolate(
   Map<String, dynamic> variables,
   I18NextOptions options,
 ) {
-  final pattern = interpolationPattern(options);
+  final formatSeparator = options.formatSeparator ?? ',';
   final keySeparator = options.keySeparator ?? '.';
+  final escapeValue = options.escapeValue ?? true;
 
-  return string.splitMapJoin(
-    pattern,
-    onMatch: (match) {
-      final regExpMatch = match as RegExpMatch;
-      final variable = regExpMatch.namedGroup('variable');
+  final todo = [
+    _InterpolationHelper(
+      interpolationUnescapePattern(options),
+      (input) => input,
+    ),
+    _InterpolationHelper(
+      interpolationPattern(options),
+      escapeValue ? (options.escape ?? escape) : (input) => input,
+    ),
+  ];
 
-      String? result;
-      if (variable != null) {
-        final path = variable.split(keySeparator);
-        final value = evaluate(path, variables);
-        // TODO: throw error or fallback behavior on options here?
-        if (value != null) {
-          final formatter = options.formatter;
-          if (formatter != null) {
-            final format = regExpMatch.namedGroup('format');
-            result = formatter(value, format, locale);
-          }
-        }
+  return todo.fold<String>(
+    string,
+    (result, helper) => result.splitMapJoin(helper.pattern, onMatch: (match) {
+      var variable = match[1]!.trim();
+
+      Iterable<String> formats = [];
+      if (variable.contains(formatSeparator)) {
+        final variableParts = variable.split(formatSeparator);
+        variable = variableParts.first.trim();
+        formats = variableParts.skip(1).map((e) => e.trim());
       }
-      return result ?? regExpMatch.group(0)!;
-    },
+
+      if (variable.isEmpty) {
+        throw InterpolationException('Missing variable', match);
+      }
+
+      final path = variable.split(keySeparator);
+      final value = evaluate(path, variables);
+      final formatted = formatter.format(value, formats, locale, options) ??
+          (throw InterpolationException(
+              'Could not evaluate or format variable', match));
+      return helper.escape(formatted);
+    }),
   );
+}
+
+class _InterpolationHelper {
+  _InterpolationHelper(this.pattern, this.escape);
+
+  final RegExp pattern;
+  final EscapeHandler escape;
 }
 
 /// Replaces occurrences of nested key-values in [string] for other
@@ -76,38 +122,45 @@ String nest(
 ) {
   final pattern = nestingPattern(options);
   return string.splitMapJoin(pattern, onMatch: (match) {
-    final regExpMatch = match as RegExpMatch;
-    final key = regExpMatch.namedGroup('key');
-
-    String? result;
-    if (key != null && key.isNotEmpty) {
-      final newVariables = Map<String, dynamic>.of(variables);
-      final varsString = regExpMatch.namedGroup('variables');
-      if (varsString != null && varsString.isNotEmpty) {
-        try {
-          final Map<String, dynamic> decoded = jsonDecode(varsString);
-          newVariables.addAll(decoded);
-        } catch (error) {
-          // TODO: throw/fallback nesting failure(s)?
-          assert(true, error);
-        }
-      }
-
-      result = translate(key, locale, newVariables, options);
+    match = match as RegExpMatch;
+    final key = match.namedGroup('key');
+    if (key == null || key.isEmpty) {
+      throw NestingException('Key not found', match);
     }
-    return result ?? regExpMatch.group(0)!;
+
+    var newVariables = variables;
+    final varsString = match.namedGroup('variables');
+    if (varsString != null && varsString.isNotEmpty) {
+      final Map<String, dynamic> decoded = jsonDecode(varsString);
+      newVariables = Map<String, dynamic>.of(variables)..addAll(decoded);
+    }
+
+    final value = translate(key, locale, newVariables, options);
+    if (value == null) {
+      throw NestingException('Translation not found', match);
+    }
+    return value;
   });
 }
 
 RegExp interpolationPattern(I18NextOptions options) {
   final prefix = RegExp.escape(options.interpolationPrefix ?? '{{');
   final suffix = RegExp.escape(options.interpolationSuffix ?? '}}');
-  final separator = RegExp.escape(options.interpolationSeparator ?? ',');
+  return RegExp('$prefix(.*?)$suffix', dotAll: true);
+}
+
+RegExp interpolationUnescapePattern(I18NextOptions options) {
+  final prefix = RegExp.escape(options.interpolationPrefix ?? '{{');
+  final suffix = RegExp.escape(options.interpolationSuffix ?? '}}');
+  final unescapePrefix = RegExp.escape(
+    options.interpolationUnescapePrefix ?? '-',
+  );
+  final unescapeSuffix = RegExp.escape(
+    options.interpolationUnescapeSuffix ?? '',
+  );
   return RegExp(
-    '$prefix'
-    '(?<variable>.*?)'
-    '($separator\\s*(?<format>.*?)\\s*)?'
-    '$suffix',
+    '$prefix$unescapePrefix(.+?)$unescapeSuffix$suffix',
+    dotAll: true,
   );
 }
 
@@ -121,4 +174,21 @@ RegExp nestingPattern(I18NextOptions options) {
     '($separator\\s*(?<variables>.*?)\\s*)?'
     '$suffix',
   );
+}
+
+String escape(String input) {
+  const _entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+  };
+
+  final pattern = RegExp('[&<>"\'\\/]');
+  return input.replaceAllMapped(pattern, (match) {
+    final char = match[0]!;
+    return _entityMap[char] ?? char;
+  });
 }
