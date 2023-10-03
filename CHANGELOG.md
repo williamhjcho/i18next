@@ -1,3 +1,7 @@
+# [0.7.0]
+
+* Fixes deprecation issues on example app
+
 # [0.6.1]
 
 * Adds `orElse` argument to `t()` to provide a fallback value or throw an exception when the translation cannot be found

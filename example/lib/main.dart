@@ -32,7 +32,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'I18nu Demo',
+      title: 'I18next Demo',
       theme: ThemeData(
         dividerTheme: const DividerThemeData(
           color: Colors.black45,
@@ -114,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             CupertinoSegmentedControl<Locale>(
               children: {
-                for (var e in widget.supportedLocales) e: Text(e.toString())
+                for (final e in widget.supportedLocales) e: Text(e.toString())
               },
               groupValue: Localizations.localeOf(context),
               onValueChanged: widget.onUpdateLocale,
@@ -122,11 +122,11 @@ class _MyHomePageState extends State<MyHomePage> {
             const Divider(),
             Text(
               homepageL10n.hello(name: 'Name', world: 'Flutter'),
-              style: theme.textTheme.headline6,
+              style: theme.textTheme.titleLarge,
             ),
             Text(
               homepageL10n.today(DateTime.now()),
-              style: theme.textTheme.subtitle2,
+              style: theme.textTheme.titleSmall,
             ),
             CupertinoSegmentedControl<String>(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -142,7 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
             const Divider(),
             Text(
               counterL10n.clicked(_counter),
-              style: theme.textTheme.headline4,
+              style: theme.textTheme.headlineMedium,
             ),
             TextButton(
               onPressed: resetCounter,
