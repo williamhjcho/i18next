@@ -1,5 +1,7 @@
 # [0.7.0]
 
+* Adds `getNamespace(Locale locale, String namespace)` in `ResourceStore` to retrieve a whole namespace set (if it exists)
+  * [Issue #17](https://github.com/williamhjcho/i18next/issues/17) - thanks @Ahmadre!
 * Fixes deprecation issues on example app
 * Updates analysis_options with flutter_lints recommended rules
 
