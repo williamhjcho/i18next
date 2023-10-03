@@ -1,4 +1,4 @@
-# Next release
+# [0.7.1]
 
 * Updates sdk constraints to `>=2.14.0`
 
