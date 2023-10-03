@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:collection/collection.dart';
 
 // ignore_for_file: lines_longer_than_80_chars
@@ -24,7 +22,7 @@ class InterpolationFormat {
   final Map<String, Object> options;
 
   @override
-  int get hashCode => hashValues(name, options);
+  int get hashCode => Object.hash(name, options);
 
   @override
   bool operator ==(Object other) =>

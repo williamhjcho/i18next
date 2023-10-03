@@ -1,3 +1,7 @@
+# Next release
+
+* Updates sdk constraints to `>=2.14.0`
+
 # [0.7.0]
 
 * Adds `getNamespace(Locale locale, String namespace)` in `ResourceStore` to retrieve a whole namespace set (if it exists)
