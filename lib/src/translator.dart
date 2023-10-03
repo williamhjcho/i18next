@@ -61,7 +61,7 @@ class Translator {
 
     var pluralSuffix = '';
     if (needsPlural) {
-      pluralSuffix = pluralResolver.pluralize(locale, count!, options);
+      pluralSuffix = pluralResolver.pluralize(locale, count, options);
     }
 
     var tempKey = key;
