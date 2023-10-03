@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 
 import 'localizations.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   final List<Locale> locales = const [
     Locale('en', 'US'),
     Locale('pt', 'BR'),
@@ -16,7 +18,7 @@ class MyApp extends StatefulWidget {
   ];
 
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
@@ -92,7 +94,7 @@ class MyHomePage extends StatefulWidget {
   final ValueChanged<Locale> onUpdateLocale;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {

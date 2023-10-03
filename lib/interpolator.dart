@@ -177,7 +177,7 @@ RegExp nestingPattern(I18NextOptions options) {
 }
 
 String escape(String input) {
-  const _entityMap = {
+  const entityMap = {
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -189,6 +189,6 @@ String escape(String input) {
   final pattern = RegExp('[&<>"\'\\/]');
   return input.replaceAllMapped(pattern, (match) {
     final char = match[0]!;
-    return _entityMap[char] ?? char;
+    return entityMap[char] ?? char;
   });
 }

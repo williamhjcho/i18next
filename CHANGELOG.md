@@ -1,6 +1,7 @@
 # [0.7.0]
 
 * Fixes deprecation issues on example app
+* Updates analysis_options with flutter_lints recommended rules
 
 # [0.6.1]
 

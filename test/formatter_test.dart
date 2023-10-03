@@ -34,7 +34,7 @@ void main() {
 
         group('when the result is not a string', () {
           test('and the fallback returns a value', () {
-            final Object? value = ['Value'];
+            final Object value = ['Value'];
             options = options.copyWith(
               missingInterpolationHandler: expectAsync4(
                 (val, format, loc, opt) {
@@ -53,7 +53,7 @@ void main() {
           });
 
           test('and the fallback returns null', () {
-            final Object? value = ['Value'];
+            final Object value = ['Value'];
             options = options.copyWith(
               missingInterpolationHandler: expectAsync4(
                 (val, format, loc, opt) {

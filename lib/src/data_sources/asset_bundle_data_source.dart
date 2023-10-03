@@ -69,7 +69,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
     final files = assetFiles
         // trailing slash is to guarantee the whole dir matches, otherwise
         // it might allow undesired files
-        .where((key) => key.contains('$bundleLocalePath'))
+        .where((key) => key.contains(bundleLocalePath))
         .where((key) => path.extension(key) == '.json');
 
     return await loadFromFiles(files);

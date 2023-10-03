@@ -14,8 +14,10 @@ dependencies:
     sdk: flutter
   i18next:
     path: ../
+  intl: ^0.18.1
 
 dev_dependencies:
+  flutter_lints: ^2.0.3
   flutter_test:
     sdk: flutter
 
