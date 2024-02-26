@@ -75,14 +75,15 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
   }
 
   @override
-  Future<I18Next> load(Locale locale) async {
+  Future<I18Next> load(Locale locale) {
     locale = normalizeLocale(locale);
 
-    final namespaces = await dataSource.load(locale);
-    // TODO: should delete previous locales/namespaces from resource store?
-    for (final entry in namespaces.entries) {
-      resourceStore.addNamespace(locale, entry.key, entry.value);
-    }
-    return I18Next(locale, resourceStore, options: options);
+    return dataSource.load(locale).then((namespaces) {
+      // TODO: should delete previous locales/namespaces from resource store?
+      for (final entry in namespaces.entries) {
+        resourceStore.addNamespace(locale, entry.key, entry.value);
+      }
+      return I18Next(locale, resourceStore, options: options);
+    });
   }
 }
