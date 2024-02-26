@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/i18next.dart';
@@ -98,6 +99,20 @@ void main() {
       expect(i18next.locale, en);
       verify(resourceStore.addNamespace(en, 'ns1', data1)).called(1);
       verify(resourceStore.addNamespace(en, 'ns2', data2)).called(1);
+    });
+
+    test('when dataSource is synchronous', () {
+      const data1 = <String, Object>{'key': 'ns1'};
+      when(dataSource.load(any)).thenAnswer(
+        (_) => SynchronousFuture({'ns1': data1}),
+      );
+
+      // checking if this is being called sync
+      I18Next? result;
+      localizationDelegate.load(en).then((value) => result = value);
+      expect(result, isNotNull);
+      expect(result!.locale, en);
+      verify(resourceStore.addNamespace(en, 'ns1', data1)).called(1);
     });
   });
 }

@@ -1,3 +1,8 @@
+# [0.7.3]
+
+- Don't schedule an extra microtask when loading a synchronous data source contents in `I18NextLocalizationDelegate`.
+  - [Issue #19](https://github.com/williamhjcho/i18next/issues/19) - thanks @wbusey0!
+
 # [0.7.2]
 
 - Updates sdk constraints to `>=2.18.0`
@@ -193,6 +198,6 @@ Internal:
 
 - Splits data fetching and translation into separate methods
 
-## [0.0.1] - TODO: Add release date.
+## [0.0.1] - TODO: Add release date
 
 - TODO: Describe initial release.
