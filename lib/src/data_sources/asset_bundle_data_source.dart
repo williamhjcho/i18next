@@ -43,23 +43,12 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   ///
   /// Then the desired [bundlePath] should be `l10n`.
   ///
-  /// - [manifest] determines from where the namespaced files will be loaded
-  /// from. This file should contain a [Map] where the keys represent the
-  /// asset's path. Defaults to 'AssetManifest.json'.
-  ///
   /// The end result is a [Map] that contains all the namespaces which are
   /// the file names themselves (case sensitive).
   @override
-  Future<Map<String, dynamic>> load(
-    Locale locale, {
-    String manifest = 'AssetManifest.json',
-  }) async {
-    assert(manifest.isNotEmpty);
-
-    final assetFiles = await bundle
-        .loadString(manifest, cache: cache)
-        .then<Map<String, dynamic>>((string) => json.decode(string))
-        .then((map) => map.keys);
+  Future<Map<String, dynamic>> load(Locale locale) async {
+    final assetManifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final assetFiles = assetManifest.listAssets();
 
     /// On every platform you never should try to get the `path.separator`,
     /// because Flutter is fetching all assets in `/` style.
