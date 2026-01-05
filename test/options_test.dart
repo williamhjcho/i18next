@@ -179,14 +179,8 @@ void main() {
           result.contextSeparator,
           permutation[2] ?? base.contextSeparator,
         );
-        expect(
-          result.pluralSeparator,
-          permutation[3] ?? base.pluralSeparator,
-        );
-        expect(
-          result.keySeparator,
-          permutation[4] ?? base.keySeparator,
-        );
+        expect(result.pluralSeparator, permutation[3] ?? base.pluralSeparator);
+        expect(result.keySeparator, permutation[4] ?? base.keySeparator);
         expect(
           result.interpolationPrefix,
           permutation[5] ?? base.interpolationPrefix,
@@ -195,18 +189,9 @@ void main() {
           result.interpolationSuffix,
           permutation[6] ?? base.interpolationSuffix,
         );
-        expect(
-          result.formatSeparator,
-          permutation[7] ?? base.formatSeparator,
-        );
-        expect(
-          result.formatterValues,
-          permutation[8] ?? base.formatterValues,
-        );
-        expect(
-          result.formats,
-          permutation[9] ?? base.formats,
-        );
+        expect(result.formatSeparator, permutation[7] ?? base.formatSeparator);
+        expect(result.formatterValues, permutation[8] ?? base.formatterValues);
+        expect(result.formats, permutation[9] ?? base.formats);
         expect(
           result.optionsSeparator,
           permutation[10] ?? base.optionsSeparator,
@@ -215,22 +200,13 @@ void main() {
           result.optionValueSeparator,
           permutation[11] ?? base.optionValueSeparator,
         );
-        expect(
-          result.nestingPrefix,
-          permutation[12] ?? base.nestingPrefix,
-        );
-        expect(
-          result.nestingSuffix,
-          permutation[13] ?? base.nestingSuffix,
-        );
+        expect(result.nestingPrefix, permutation[12] ?? base.nestingPrefix);
+        expect(result.nestingSuffix, permutation[13] ?? base.nestingSuffix);
         expect(
           result.nestingSeparator,
           permutation[14] ?? base.nestingSeparator,
         );
-        expect(
-          result.pluralSuffix,
-          permutation[15] ?? base.pluralSuffix,
-        );
+        expect(result.pluralSuffix, permutation[15] ?? base.pluralSuffix);
       });
     }
   });

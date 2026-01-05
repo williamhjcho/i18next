@@ -32,8 +32,8 @@ import 'translator.dart';
 /// ```
 class I18Next {
   I18Next(this.locale, this.resourceStore, {I18NextOptions? options})
-      : pluralResolver = const PluralResolver(),
-        options = I18NextOptions.base.merge(options);
+    : pluralResolver = const PluralResolver(),
+      options = I18NextOptions.base.merge(options);
 
   /// The current and default [Locale] for this instance.
   final Locale locale;
@@ -112,11 +112,17 @@ class I18Next {
     locale ??= this.locale;
     final newOptions = this.options.merge(options);
 
-    var result = Translator(pluralResolver, resourceStore)
-        .call(key, locale, variables, newOptions);
+    var result = Translator(
+      pluralResolver,
+      resourceStore,
+    ).call(key, locale, variables, newOptions);
     if (result == null && newOptions.missingKeyHandler != null) {
-      result =
-          newOptions.missingKeyHandler!(locale, key, variables, newOptions);
+      result = newOptions.missingKeyHandler!(
+        locale,
+        key,
+        variables,
+        newOptions,
+      );
     }
     return result;
   }

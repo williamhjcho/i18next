@@ -15,9 +15,9 @@ class HomePageL10n {
       i18next.t('homepage:today', variables: {'date': date});
 
   String hello({required String name, required String world}) => i18next.t(
-        'homepage:helloMessage',
-        variables: {'name': name, 'world': world},
-      );
+    'homepage:helloMessage',
+    variables: {'name': name, 'world': world},
+  );
 
   String gendered(String gender) =>
       i18next.t('homepage:genderMessage', context: gender);

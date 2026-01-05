@@ -11,28 +11,31 @@ import 'interpolation_format.dart';
 ///
 /// The [value] can be null if the variable wasn't evaluated properly, giving a
 /// chance for the formatter to do something
-typedef ValueFormatter = Object? Function(
-  Object? value,
-  InterpolationFormat format,
-  Locale locale,
-  I18NextOptions options,
-);
+typedef ValueFormatter =
+    Object? Function(
+      Object? value,
+      InterpolationFormat format,
+      Locale locale,
+      I18NextOptions options,
+    );
 
-typedef MissingKeyHandler = String? Function(
-  Locale locale,
-  String key,
-  Map<String, dynamic> variables,
-  I18NextOptions options,
-);
+typedef MissingKeyHandler =
+    String? Function(
+      Locale locale,
+      String key,
+      Map<String, dynamic> variables,
+      I18NextOptions options,
+    );
 
-typedef TranslationFailedHandler = String Function(
-  Locale locale,
-  String namespace,
-  String key,
-  Map<String, dynamic> variables,
-  I18NextOptions options,
-  Object error,
-);
+typedef TranslationFailedHandler =
+    String Function(
+      Locale locale,
+      String namespace,
+      String key,
+      Map<String, dynamic> variables,
+      I18NextOptions options,
+      Object error,
+    );
 
 typedef EscapeHandler = String Function(String input);
 
@@ -75,10 +78,7 @@ class I18NextOptions with Diagnosticable {
     interpolationUnescapePrefix: '-',
     interpolationUnescapeSuffix: '',
     formatSeparator: ',',
-    formatterValues: {
-      'true': true,
-      'false': false,
-    },
+    formatterValues: {'true': true, 'false': false},
     formats: {},
     optionsSeparator: ';',
     optionValueSeparator: ':',
@@ -253,8 +253,8 @@ class I18NextOptions with Diagnosticable {
       formats: formats == null
           ? other.formats
           : other.formats == null
-              ? formats
-              : {...?formats, ...?other.formats},
+          ? formats
+          : {...?formats, ...?other.formats},
       optionsSeparator: other.optionsSeparator ?? optionsSeparator,
       optionValueSeparator: other.optionValueSeparator ?? optionValueSeparator,
       nestingPrefix: other.nestingPrefix ?? nestingPrefix,
@@ -330,29 +330,29 @@ class I18NextOptions with Diagnosticable {
 
   @override
   int get hashCode => Object.hashAll([
-        namespaceSeparator,
-        contextSeparator,
-        pluralSeparator,
-        keySeparator,
-        interpolationPrefix,
-        interpolationSuffix,
-        formatSeparator,
-        interpolationUnescapePrefix,
-        interpolationUnescapeSuffix,
-        formatterValues,
-        formats,
-        optionsSeparator,
-        optionValueSeparator,
-        nestingPrefix,
-        nestingSuffix,
-        nestingSeparator,
-        pluralSuffix,
-        missingKeyHandler,
-        missingInterpolationHandler,
-        translationFailedHandler,
-        escape,
-        escapeValue,
-      ]);
+    namespaceSeparator,
+    contextSeparator,
+    pluralSeparator,
+    keySeparator,
+    interpolationPrefix,
+    interpolationSuffix,
+    formatSeparator,
+    interpolationUnescapePrefix,
+    interpolationUnescapeSuffix,
+    formatterValues,
+    formats,
+    optionsSeparator,
+    optionValueSeparator,
+    nestingPrefix,
+    nestingSuffix,
+    nestingSeparator,
+    pluralSuffix,
+    missingKeyHandler,
+    missingInterpolationHandler,
+    translationFailedHandler,
+    escape,
+    escapeValue,
+  ]);
 
   @override
   bool operator ==(Object other) {
@@ -403,10 +403,18 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('nestingSeparator', nestingSeparator))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
       ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
-      ..add(StringProperty('missingInterpolationHandler',
-          missingInterpolationHandler?.toString()))
-      ..add(StringProperty(
-          'translationFailedHandler', translationFailedHandler?.toString()))
+      ..add(
+        StringProperty(
+          'missingInterpolationHandler',
+          missingInterpolationHandler?.toString(),
+        ),
+      )
+      ..add(
+        StringProperty(
+          'translationFailedHandler',
+          translationFailedHandler?.toString(),
+        ),
+      )
       ..add(StringProperty('escape', escape?.toString()))
       ..add(StringProperty('escapeValue', escapeValue?.toString()));
   }

@@ -22,7 +22,8 @@ String? format(
   final result = formats.fold<Object?>(value, (currentValue, format) {
     try {
       final parsedFormat = parseFormatString(format, options);
-      final formatter = options.formats?[parsedFormat.name] ??
+      final formatter =
+          options.formats?[parsedFormat.name] ??
           options.missingInterpolationHandler;
       if (formatter != null) {
         return formatter(currentValue, parsedFormat, locale, options);
@@ -40,8 +41,12 @@ String? format(
   if (result != null && result is! String) {
     final formatter = options.missingInterpolationHandler;
     if (formatter != null) {
-      return formatter(result, InterpolationFormat.fallback, locale, options)
-          ?.toString();
+      return formatter(
+        result,
+        InterpolationFormat.fallback,
+        locale,
+        options,
+      )?.toString();
     }
   }
 

@@ -24,8 +24,10 @@ class MockLocalizationDataSource extends _i1.Mock
 
   @override
   _i3.Future<Map<String, dynamic>> load(_i4.Locale? locale) =>
-      (super.noSuchMethod(Invocation.method(#load, [locale]),
-              returnValue: Future.value(<String, dynamic>{}))
+      (super.noSuchMethod(
+            Invocation.method(#load, [locale]),
+            returnValue: Future.value(<String, dynamic>{}),
+          )
           as _i3.Future<Map<String, dynamic>>);
 }
 
@@ -39,37 +41,58 @@ class MockResourceStore extends _i1.Mock implements _i5.ResourceStore {
 
   @override
   void addNamespace(
-          _i4.Locale? locale, String? namespace, Map<String, dynamic>? data) =>
-      super.noSuchMethod(
-          Invocation.method(#addNamespace, [locale, namespace, data]),
-          returnValueForMissingStub: null);
+    _i4.Locale? locale,
+    String? namespace,
+    Map<String, dynamic>? data,
+  ) => super.noSuchMethod(
+    Invocation.method(#addNamespace, [locale, namespace, data]),
+    returnValueForMissingStub: null,
+  );
   @override
-  void removeNamespace(_i4.Locale? locale, String? namespace) => super
-      .noSuchMethod(Invocation.method(#removeNamespace, [locale, namespace]),
-          returnValueForMissingStub: null);
+  void removeNamespace(_i4.Locale? locale, String? namespace) =>
+      super.noSuchMethod(
+        Invocation.method(#removeNamespace, [locale, namespace]),
+        returnValueForMissingStub: null,
+      );
   @override
   _i3.Future<void> removeLocale(_i4.Locale? locale) =>
-      (super.noSuchMethod(Invocation.method(#removeLocale, [locale]),
-          returnValue: Future.value(null),
-          returnValueForMissingStub: Future.value()) as _i3.Future<void>);
+      (super.noSuchMethod(
+            Invocation.method(#removeLocale, [locale]),
+            returnValue: Future.value(null),
+            returnValueForMissingStub: Future.value(),
+          )
+          as _i3.Future<void>);
   @override
   _i3.Future<void> removeAll() =>
-      (super.noSuchMethod(Invocation.method(#removeAll, []),
-          returnValue: Future.value(null),
-          returnValueForMissingStub: Future.value()) as _i3.Future<void>);
+      (super.noSuchMethod(
+            Invocation.method(#removeAll, []),
+            returnValue: Future.value(null),
+            returnValueForMissingStub: Future.value(),
+          )
+          as _i3.Future<void>);
   @override
   bool isNamespaceRegistered(_i4.Locale? locale, String? namespace) =>
       (super.noSuchMethod(
-          Invocation.method(#isNamespaceRegistered, [locale, namespace]),
-          returnValue: false) as bool);
+            Invocation.method(#isNamespaceRegistered, [locale, namespace]),
+            returnValue: false,
+          )
+          as bool);
   @override
   bool isLocaleRegistered(_i4.Locale? locale) =>
-      (super.noSuchMethod(Invocation.method(#isLocaleRegistered, [locale]),
-          returnValue: false) as bool);
-  @override
-  String? retrieve(_i4.Locale? locale, String? namespace, String? key,
-          _i6.I18NextOptions? options) =>
       (super.noSuchMethod(
-              Invocation.method(#retrieve, [locale, namespace, key, options]))
+            Invocation.method(#isLocaleRegistered, [locale]),
+            returnValue: false,
+          )
+          as bool);
+  @override
+  String? retrieve(
+    _i4.Locale? locale,
+    String? namespace,
+    String? key,
+    _i6.I18NextOptions? options,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#retrieve, [locale, namespace, key, options]),
+          )
           as String?);
 }

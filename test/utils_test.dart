@@ -7,17 +7,12 @@ void main() {
   group('evaluate', () {
     const locale = Locale('any');
 
-    final level2 = <Object, Object>{
-      'key': 'Second level leaf',
-    };
+    final level2 = <Object, Object>{'key': 'Second level leaf'};
     final level1 = <Object, Object>{
       'key': 'First level leaf',
       'nested': level2,
     };
-    final data = <Object, Object>{
-      'key': 'Zero level leaf',
-      locale: level1,
-    };
+    final data = <Object, Object>{'key': 'Zero level leaf', locale: level1};
 
     test('given empty path', () {
       expect(evaluate([], data), data);

@@ -28,10 +28,7 @@ void main() {
     final throwsInterpolationException = throwsA(isA<InterpolationException>());
 
     test('given a non matching string', () {
-      expect(
-        interpol('This is a normal string'),
-        'This is a normal string',
-      );
+      expect(interpol('This is a normal string'), 'This is a normal string');
     });
 
     group('given a matching string', () {
@@ -45,10 +42,7 @@ void main() {
       group('with variable only', () {
         test('without variables', () {
           const string = 'This is a {{variable}} string';
-          expect(
-            () => interpol(string),
-            throwsInterpolationException,
-          );
+          expect(() => interpol(string), throwsInterpolationException);
         });
 
         test('with replaceable variables', () {
@@ -67,8 +61,8 @@ void main() {
               'This is a {{grouped.key.variable}} string',
               variables: {
                 'grouped': {
-                  'key': {'variable': 'grouped variable'}
-                }
+                  'key': {'variable': 'grouped variable'},
+                },
               },
             ),
             'This is a grouped variable string',
@@ -80,7 +74,7 @@ void main() {
             () => interpol(
               'This is a {{grouped.key.variable}} string',
               variables: {
-                'grouped': {'key': 'grouped variable'}
+                'grouped': {'key': 'grouped variable'},
               },
             ),
             throwsInterpolationException,
@@ -112,15 +106,13 @@ void main() {
               'This is a {{variable, format}} string',
               variables: {'variable': 'my variable'},
               formats: {
-                'format': expectAsync4(
-                  (variable, format, locale, options) {
-                    expect(variable, 'my variable');
-                    expect(format.name, 'format');
-                    expect(format.options, isEmpty);
-                    expect(locale, defaultLocale);
-                    return 'VALUE';
-                  },
-                ),
+                'format': expectAsync4((variable, format, locale, options) {
+                  expect(variable, 'my variable');
+                  expect(format.name, 'format');
+                  expect(format.options, isEmpty);
+                  expect(locale, defaultLocale);
+                  return 'VALUE';
+                }),
               },
             ),
             'This is a VALUE string',
@@ -133,15 +125,13 @@ void main() {
               'This is a {{variable, format}} string',
               variables: {'variable': 'my variable'},
               formats: {
-                'format': expectAsync4(
-                  (variable, format, locale, options) {
-                    expect(variable, 'my variable');
-                    expect(format.name, 'format');
-                    expect(format.options, isEmpty);
-                    expect(locale, defaultLocale);
-                    return null;
-                  },
-                ),
+                'format': expectAsync4((variable, format, locale, options) {
+                  expect(variable, 'my variable');
+                  expect(format.name, 'format');
+                  expect(format.options, isEmpty);
+                  expect(locale, defaultLocale);
+                  return null;
+                }),
               },
             ),
             throwsInterpolationException,
@@ -228,16 +218,14 @@ void main() {
 
     final throwsNestingException = throwsA(isA<NestingException>());
 
-    Translate noTranslateCalls() =>
-        expectAsync4((key, a, b, c) => fail('Should not have been called'),
-            count: 0);
+    Translate noTranslateCalls() => expectAsync4(
+      (key, a, b, c) => fail('Should not have been called'),
+      count: 0,
+    );
 
     test('given a non matching string', () {
       expect(
-        nst(
-          'This is my unmatching string',
-          translate: noTranslateCalls(),
-        ),
+        nst('This is my unmatching string', translate: noTranslateCalls()),
         'This is my unmatching string',
       );
     });
@@ -245,10 +233,7 @@ void main() {
     group('given a nesting string', () {
       test('without key or variables', () {
         expect(
-          () => nst(
-            r'This is my $t() string',
-            translate: noTranslateCalls(),
-          ),
+          () => nst(r'This is my $t() string', translate: noTranslateCalls()),
           throwsNestingException,
         );
       });
@@ -356,10 +341,7 @@ void main() {
 
     group('with multiple nestings', () {
       test('and both succeed', () {
-        final returnValues = {
-          'key': 'VALUE',
-          'anotherKey': 'ANOTHER VALUE',
-        };
+        final returnValues = {'key': 'VALUE', 'anotherKey': 'ANOTHER VALUE'};
 
         expect(
           nst(
@@ -401,22 +383,14 @@ void main() {
     });
 
     test('when has only one match with format with whitespaces', () {
-      expect(
-        allMatches('My text has {{one,   Xyz}} match'),
-        ['one,   Xyz'],
-      );
-      expect(
-        allMatches('My text has {{one, Xyz   }} match'),
-        ['one, Xyz   '],
-      );
-      expect(
-        allMatches('My text has {{one,    Xyz   }} match'),
-        ['one,    Xyz   '],
-      );
-      expect(
-        allMatches('My text has {{one, \nXyz\n}} match'),
-        ['one, \nXyz\n'],
-      );
+      expect(allMatches('My text has {{one,   Xyz}} match'), ['one,   Xyz']);
+      expect(allMatches('My text has {{one, Xyz   }} match'), ['one, Xyz   ']);
+      expect(allMatches('My text has {{one,    Xyz   }} match'), [
+        'one,    Xyz   ',
+      ]);
+      expect(allMatches('My text has {{one, \nXyz\n}} match'), [
+        'one, \nXyz\n',
+      ]);
     });
 
     test('when has multiple matches without formats', () {
@@ -448,43 +422,40 @@ void main() {
   group('nestingPattern', () {
     final pattern = nestingPattern(baseOptions);
 
-    Iterable<List<String?>> allMatches(String text) =>
-        pattern.allMatches(text).map((match) => [
-              match.namedGroup('key'),
-              match.namedGroup('variables'),
-            ]);
+    Iterable<List<String?>> allMatches(String text) => pattern
+        .allMatches(text)
+        .map(
+          (match) => [match.namedGroup('key'), match.namedGroup('variables')],
+        );
 
     test('default pattern', () {
-      expect(
-        pattern.pattern,
-        r'\$t\((?<key>.*?)(,\s*(?<variables>.*?)\s*)?\)',
-      );
+      expect(pattern.pattern, r'\$t\((?<key>.*?)(,\s*(?<variables>.*?)\s*)?\)');
     });
 
     test('when has only one match without variables', () {
       expect(allMatches(r'My text has $t(one) match'), [
-        ['one', null]
+        ['one', null],
       ]);
     });
 
     test('when has only one match with variables', () {
       expect(allMatches(r'My text has $t(one, {"my": "values"}) match'), [
-        ['one', '{"my": "values"}']
+        ['one', '{"my": "values"}'],
       ]);
     });
 
     test('when has only one match with variables and whitespaces', () {
       expect(allMatches(r'My text has $t(one,   Xyz) match'), [
-        ['one', 'Xyz']
+        ['one', 'Xyz'],
       ]);
       expect(allMatches(r'My text has $t(one, Xyz   ) match'), [
-        ['one', 'Xyz']
+        ['one', 'Xyz'],
       ]);
       expect(allMatches(r'My text has $t(one,    Xyz   ) match'), [
-        ['one', 'Xyz']
+        ['one', 'Xyz'],
       ]);
       expect(allMatches('My text has \$t(one, \nXyz\n) match'), [
-        ['one', 'Xyz']
+        ['one', 'Xyz'],
       ]);
     });
 
@@ -493,7 +464,7 @@ void main() {
         ['text', null],
         ['has', null],
         ['four', null],
-        ['matches', null]
+        ['matches', null],
       ]);
     });
 
@@ -506,7 +477,7 @@ void main() {
           ['text', 'Aaa'],
           ['has', 'Bbb'],
           ['four', 'Ccc'],
-          ['matches', 'Ddd']
+          ['matches', 'Ddd'],
         ],
       );
     });
@@ -520,7 +491,7 @@ void main() {
         ['text', null],
         ['has', 'Bbb'],
         ['four', 'Ccc'],
-        ['matches', null]
+        ['matches', null],
       ]);
     });
   });
@@ -575,5 +546,4 @@ String? _defaultTranslate(
   Locale locale,
   Map<String, dynamic> variables,
   I18NextOptions options,
-) =>
-    key;
+) => key;

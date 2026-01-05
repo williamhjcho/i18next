@@ -91,9 +91,9 @@ void main() {
     test('when dataSource succeeds', () async {
       const data1 = <String, Object>{'key': 'ns1'};
       const data2 = <String, Object>{'key': 'ns1'};
-      when(dataSource.load(any)).thenAnswer(
-        (_) async => {'ns1': data1, 'ns2': data2},
-      );
+      when(
+        dataSource.load(any),
+      ).thenAnswer((_) async => {'ns1': data1, 'ns2': data2});
 
       final i18next = await localizationDelegate.load(en);
       expect(i18next.locale, en);
@@ -103,9 +103,9 @@ void main() {
 
     test('when dataSource is synchronous', () {
       const data1 = <String, Object>{'key': 'ns1'};
-      when(dataSource.load(any)).thenAnswer(
-        (_) => SynchronousFuture({'ns1': data1}),
-      );
+      when(
+        dataSource.load(any),
+      ).thenAnswer((_) => SynchronousFuture({'ns1': data1}));
 
       // checking if this is being called sync
       I18Next? result;

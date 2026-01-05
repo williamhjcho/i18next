@@ -18,19 +18,19 @@ void main() {
     const validNamespace = 'ns';
 
     setUp(() {
-      store = ResourceStore(data: {
-        locale: {
-          validNamespace: {
-            'key': 'This is a simple key',
-            'my': {
-              'key': 'This is a nested key',
-              'nested': {
-                'key': 'This is a more nested key',
-              }
-            }
-          }
-        }
-      });
+      store = ResourceStore(
+        data: {
+          locale: {
+            validNamespace: {
+              'key': 'This is a simple key',
+              'my': {
+                'key': 'This is a nested key',
+                'nested': {'key': 'This is a more nested key'},
+              },
+            },
+          },
+        },
+      );
     });
 
     test('with unmatching locale', () {
@@ -89,36 +89,19 @@ void main() {
     });
 
     test('given a keySeparator', () {
-      final newOptions = options.copyWith(
-        keySeparator: '+++',
-      );
+      final newOptions = options.copyWith(keySeparator: '+++');
       expect(
-        store.retrieve(
-          locale,
-          validNamespace,
-          'my+++nested+++key',
-          newOptions,
-        ),
+        store.retrieve(locale, validNamespace, 'my+++nested+++key', newOptions),
         'This is a more nested key',
       );
 
       expect(
-        store.retrieve(
-          locale,
-          validNamespace,
-          'my.nested.key',
-          newOptions,
-        ),
+        store.retrieve(locale, validNamespace, 'my.nested.key', newOptions),
         isNull,
       );
 
       expect(
-        store.retrieve(
-          locale,
-          validNamespace,
-          'my/nested/key',
-          newOptions,
-        ),
+        store.retrieve(locale, validNamespace, 'my/nested/key', newOptions),
         isNull,
       );
     });
@@ -208,7 +191,9 @@ void main() {
         const anotherData = {'a': '00', 'b': '11'};
         store.addNamespace(locale, registeredNamespace, anotherData);
         expect(
-            store.isNamespaceRegistered(locale, registeredNamespace), isTrue);
+          store.isNamespaceRegistered(locale, registeredNamespace),
+          isTrue,
+        );
         expect(
           store.retrieve(locale, registeredNamespace, 'a', options),
           equals('00'),

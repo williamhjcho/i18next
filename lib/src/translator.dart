@@ -6,11 +6,8 @@ import 'plural_resolver.dart';
 import 'resource_store.dart';
 
 class Translator {
-  Translator(
-    this.pluralResolver,
-    this.resourceStore, [
-    this.contextNamespace,
-  ]) : super();
+  Translator(this.pluralResolver, this.resourceStore, [this.contextNamespace])
+    : super();
 
   final PluralResolver pluralResolver;
   final ResourceStore resourceStore;
@@ -132,8 +129,11 @@ class Translator {
             return null;
           }
 
-          return Translator(pluralResolver, resourceStore, namespace)
-              .call(currentKey, locale, newVariables, options);
+          return Translator(
+            pluralResolver,
+            resourceStore,
+            namespace,
+          ).call(currentKey, locale, newVariables, options);
         },
         variables,
         options,

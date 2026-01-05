@@ -9,7 +9,7 @@ import 'localizations.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   final List<Locale> locales = const [
     Locale('en', 'US'),
@@ -70,25 +70,25 @@ class _MyAppState extends State<MyApp> {
   }
 
   static Map<String, ValueFormatter> formatters() => {
-        'uppercase': (value, format, locale, options) =>
-            value?.toString().toUpperCase(),
-        'lowercase': (value, format, locale, options) =>
-            value?.toString().toLowerCase(),
-        'datetime': (value, format, locale, options) {
-          if (value is! DateTime) return value;
-          var dateFormat = format.options['format'];
-          dateFormat = dateFormat is String ? dateFormat : 'dd/MM/yyyy';
-          return DateFormat(dateFormat, locale.toString()).format(value);
-        },
-      };
+    'uppercase': (value, format, locale, options) =>
+        value?.toString().toUpperCase(),
+    'lowercase': (value, format, locale, options) =>
+        value?.toString().toLowerCase(),
+    'datetime': (value, format, locale, options) {
+      if (value is! DateTime) return value;
+      var dateFormat = format.options['format'];
+      dateFormat = dateFormat is String ? dateFormat : 'dd/MM/yyyy';
+      return DateFormat(dateFormat, locale.toString()).format(value);
+    },
+  };
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({
-    Key? key,
+    super.key,
     required this.supportedLocales,
     required this.onUpdateLocale,
-  }) : super(key: key);
+  });
 
   final List<Locale> supportedLocales;
   final ValueChanged<Locale> onUpdateLocale;
@@ -116,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             CupertinoSegmentedControl<Locale>(
               children: {
-                for (final e in widget.supportedLocales) e: Text(e.toString())
+                for (final e in widget.supportedLocales) e: Text(e.toString()),
               },
               groupValue: Localizations.localeOf(context),
               onValueChanged: widget.onUpdateLocale,
