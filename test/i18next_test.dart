@@ -1,12 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/i18next.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'i18next_localization_delegate_test.mocks.dart';
+class MockResourceStore extends Mock implements ResourceStore {}
 
-@GenerateMocks([ResourceStore, LocalizationDataSource])
+class MockLocalizationDataSource extends Mock
+    implements LocalizationDataSource {}
+
 void main() {
   const namespace = 'local_namespace';
   const locale = Locale('en');
@@ -14,10 +15,17 @@ void main() {
   late I18Next i18next;
   late MockResourceStore resourceStore;
 
+  setUpAll(() {
+    registerFallbackValue(Locale('any'));
+    registerFallbackValue(I18NextOptions());
+  });
+
   setUp(() {
     resourceStore = MockResourceStore();
     i18next = I18Next(locale, resourceStore);
-    when(resourceStore.retrieve(any, any, any, any)).thenReturn(null);
+    when(
+      () => resourceStore.retrieve(any(), any(), any(), any()),
+    ).thenReturn(null);
   });
 
   void mockKey(
@@ -26,7 +34,9 @@ void main() {
     String ns = namespace,
     Locale locale = locale,
   }) {
-    when(resourceStore.retrieve(locale, ns, key, any)).thenReturn(answer);
+    when(
+      () => resourceStore.retrieve(locale, ns, key, any()),
+    ).thenReturn(answer);
   }
 
   group('given named namespaces', () {
@@ -37,20 +47,20 @@ void main() {
 
     test('given key for matching namespaces', () {
       expect(i18next.t('ns1:key'), 'My first value');
-      verify(resourceStore.retrieve(locale, 'ns1', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns1', 'key', any()));
 
       expect(i18next.t('ns2:key'), 'My second value');
-      verify(resourceStore.retrieve(locale, 'ns2', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns2', 'key', any()));
     });
 
     test('given key for unmatching namespaces', () {
       expect(i18next.t('ns3:key'), 'ns3:key');
-      verify(resourceStore.retrieve(locale, 'ns3', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns3', 'key', any()));
     });
 
     test('given key for partially matching namespaces', () {
       expect(i18next.t('ns:key'), 'ns:key');
-      verify(resourceStore.retrieve(locale, 'ns', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns', 'key', any()));
     });
   });
 
@@ -58,17 +68,23 @@ void main() {
     mockKey('key', 'My value', ns: 'ns');
 
     expect(i18next.t('ns:key'), 'My value');
-    verify(resourceStore.retrieve(locale, 'ns', 'key', any)).called(1);
+    verify(() => resourceStore.retrieve(locale, 'ns', 'key', any())).called(1);
   });
 
   test('given key without namespace', () {
-    when(resourceStore.retrieve(any, any, any, any)).thenReturn(null);
+    when(
+      () => resourceStore.retrieve(any(), any(), any(), any()),
+    ).thenReturn(null);
 
     expect(i18next.t('someKey'), 'someKey');
-    verify(resourceStore.retrieve(locale, '', 'someKey', any)).called(1);
+    verify(
+      () => resourceStore.retrieve(locale, '', 'someKey', any()),
+    ).called(1);
 
     expect(i18next.t('some.key'), 'some.key');
-    verify(resourceStore.retrieve(locale, '', 'some.key', any)).called(1);
+    verify(
+      () => resourceStore.retrieve(locale, '', 'some.key', any()),
+    ).called(1);
   });
 
   test('given an existing string key', () {
@@ -100,7 +116,7 @@ void main() {
 
     expect(i18next.t('$namespace:key', locale: anotherLocale), 'my value');
     verify(
-      resourceStore.retrieve(anotherLocale, namespace, 'key', any),
+      () => resourceStore.retrieve(anotherLocale, namespace, 'key', any()),
     ).called(1);
   });
 
@@ -762,7 +778,7 @@ void main() {
 
     testWidgets('when is registered in the widget tree', (tester) async {
       final dataSource = MockLocalizationDataSource();
-      when(dataSource.load(any)).thenAnswer((_) async => {});
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await tester.pumpWidget(
         Localizations(
