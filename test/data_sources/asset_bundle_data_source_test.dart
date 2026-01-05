@@ -1,17 +1,39 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/i18next.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'asset_bundle_data_source_test.mocks.dart';
+class MockAssetBundle extends Mock implements AssetBundle {
+  @override
+  Future<T> loadStructuredBinaryData<T>(
+    String key,
+    FutureOr<T> Function(ByteData data) parser,
+  ) async {
+    return await loadMock(key) as T;
+  }
 
-@GenerateMocks([AssetBundle])
+  Future<AssetManifest> loadMock(String key);
+}
+
+class MockAssetManifest implements AssetManifest {
+  MockAssetManifest(this.assets);
+
+  final List<String> assets;
+
+  @override
+  List<String> listAssets() => assets;
+
+  @override
+  List<AssetMetadata>? getAssetVariants(String key) {
+    throw UnimplementedError();
+  }
+}
+
 void main() {
   const bundlePath = 'bundle/path';
-  const defaultManifest = 'AssetManifest.json';
   late MockAssetBundle bundle;
   late AssetBundleLocalizationDataSource dataSource;
 
@@ -25,21 +47,19 @@ void main() {
 
   group('#loadFromAssetBundle', () {
     setUp(() {
-      when(bundle.loadString(defaultManifest)).thenAnswer(
-        (_) async =>
-            '''{
-            "another/asset/path": [""],
-            "$bundlePath/en-US/file1.json": [""],
-            "$bundlePath/en-US/file2.json": [""],
-            "$bundlePath/pt/file1.json": [""],
-            "$bundlePath/pt/file2.json": [""]
-          }''',
+      when(() => bundle.loadMock(any())).thenAnswer(
+        (_) async => MockAssetManifest([
+          "another/asset/path",
+          "$bundlePath/en-US/file1.json",
+          "$bundlePath/en-US/file2.json",
+          "$bundlePath/pt/file1.json",
+          "$bundlePath/pt/file2.json",
+        ]),
       );
     });
 
     test('given any locale', () async {
       await expectLater(dataSource.load(const Locale('any')), completes);
-      verify(bundle.loadString(defaultManifest)).called(1);
     });
 
     test('given an unregistered locale', () {
@@ -48,7 +68,7 @@ void main() {
 
     test('given a supported full locale', () async {
       when(
-        bundle.loadString(argThat(contains('$bundlePath/'))),
+        () => bundle.loadString(any(that: contains('$bundlePath/'))),
       ).thenAnswer((_) async => '{}');
 
       await expectLater(
@@ -58,8 +78,8 @@ void main() {
         ),
       );
 
-      verify(bundle.loadString('$bundlePath/en-US/file1.json')).called(1);
-      verify(bundle.loadString('$bundlePath/en-US/file2.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/en-US/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/en-US/file2.json')).called(1);
     });
 
     test('given an unsupported long locale', () async {
@@ -68,14 +88,20 @@ void main() {
         completion(isEmpty),
       );
 
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/pt/'))));
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/pt-BR/'))));
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/en-US/'))));
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/pt/'))),
+      );
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/pt-BR/'))),
+      );
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/en-US/'))),
+      );
     });
 
     test('given a supported short locale', () async {
       when(
-        bundle.loadString(argThat(contains('$bundlePath/'))),
+        () => bundle.loadString(any(that: contains('$bundlePath/'))),
       ).thenAnswer((_) async => '{}');
 
       await expectLater(
@@ -85,9 +111,11 @@ void main() {
         ),
       );
 
-      verify(bundle.loadString('$bundlePath/pt/file1.json')).called(1);
-      verify(bundle.loadString('$bundlePath/pt/file2.json')).called(1);
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/en-US/'))));
+      verify(() => bundle.loadString('$bundlePath/pt/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/pt/file2.json')).called(1);
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/en-US/'))),
+      );
     });
 
     test('given an unsupported short locale', () async {
@@ -96,40 +124,28 @@ void main() {
         completion(isEmpty),
       );
 
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/ar/'))));
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/pt/'))));
-      verifyNever(bundle.loadString(argThat(contains('$bundlePath/en-US/'))));
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/ar/'))),
+      );
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/pt/'))),
+      );
+      verifyNever(
+        () => bundle.loadString(any(that: contains('$bundlePath/en-US/'))),
+      );
     });
 
     test('when bundle errors', () async {
       const error = 'Some error';
-      when(bundle.loadString(any)).thenAnswer((_) async => throw error);
+      when(() => bundle.loadMock(any())).thenAnswer((_) async => throw error);
 
-      expect(dataSource.load(const Locale('any')), throwsA(error));
-    });
-
-    test('given manifest empty', () {
-      // expect(
-      //   () => dataSource.load(
-      //     const Locale('any'),
-      //     // manifest: '',
-      //   ),
-      //   throwsAssertionError,
-      // );
-    });
-
-    test('given manifest', () async {
-      const manifest = 'SomeManifestFile.json';
-      when(bundle.loadString(any)).thenAnswer((_) async => '{}');
-
-      await expectLater(dataSource.load(const Locale('any')), completes);
-      verify(bundle.loadString(manifest)).called(1);
+      await expectLater(dataSource.load(const Locale('any')), throwsA(error));
     });
 
     test('given incorrect source-path to any bundle asset', () async {
       await expectLater(dataSource.load(const Locale('any')), completes);
 
-      verifyNever(bundle.loadString(argThat(contains('bundle\\path'))));
+      verifyNever(() => bundle.loadString(any(that: contains('bundle\\path'))));
     });
   });
 }
