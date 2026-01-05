@@ -16,8 +16,7 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
     required this.dataSource,
     ResourceStore? resourceStore,
     this.options,
-  }) : resourceStore = resourceStore ?? ResourceStore(),
-       super();
+  }) : resourceStore = resourceStore ?? ResourceStore();
 
   /// The list of supported locales by this delegate.
   ///
@@ -78,10 +77,27 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
   Future<I18Next> load(Locale locale) {
     locale = normalizeLocale(locale);
 
-    return dataSource.load(locale).then((namespaces) {
+    final fallbackLanguages = options?.fallbackLanguages;
+    final Future<List<(Locale, Map<String, dynamic>)>> futures;
+    if (fallbackLanguages != null && fallbackLanguages.isNotEmpty) {
+      futures = Future.wait(
+        [locale, ...fallbackLanguages].map(
+          (locale) => dataSource
+              .load(locale)
+              .then((namespaces) => (locale, namespaces)),
+        ),
+      );
+    } else {
+      // keep future chain sync if data source is also sync
+      futures = dataSource
+          .load(locale)
+          .then((namespaces) => [(locale, namespaces)]);
+    }
+
+    return futures.then((results) {
       // TODO: should delete previous locales/namespaces from resource store?
-      for (final entry in namespaces.entries) {
-        resourceStore.addNamespace(locale, entry.key, entry.value);
+      for (final (locale, namespaces) in results) {
+        resourceStore.addLocale(locale, namespaces);
       }
       return I18Next(locale, resourceStore, options: options);
     });

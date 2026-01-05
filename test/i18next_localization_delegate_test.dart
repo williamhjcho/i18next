@@ -102,8 +102,9 @@ void main() {
 
       final i18next = await localizationDelegate.load(en);
       expect(i18next.locale, en);
-      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
-      verify(() => resourceStore.addNamespace(en, 'ns2', data2)).called(1);
+      verify(
+        () => resourceStore.addLocale(en, {'ns1': data1, 'ns2': data2}),
+      ).called(1);
     });
 
     test('when dataSource is synchronous', () {
@@ -117,7 +118,7 @@ void main() {
       localizationDelegate.load(en).then((value) => result = value);
       expect(result, isNotNull);
       expect(result!.locale, en);
-      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
+      verify(() => resourceStore.addLocale(en, {'ns1': data1})).called(1);
     });
   });
 }
