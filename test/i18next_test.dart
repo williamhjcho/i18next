@@ -217,8 +217,11 @@ void main() {
   });
 
   group('fallback', () {
+    const french = Locale('fr'), german = Locale('de');
+    const fallbackNamespace1 = 'fallback_namespace_1';
+    const fallbackNamespace2 = 'fallback_namespace_2';
+
     test('given a global fallback key substitution', () {
-      const fallbackNamespace1 = 'fallback_namespace_1';
       i18next = I18Next(
         locale,
         resourceStore,
@@ -233,9 +236,6 @@ void main() {
     });
 
     group('given 2 global fallback keys subsitution', () {
-      const fallbackNamespace1 = 'fallback_namespace_1';
-      const fallbackNamespace2 = 'fallback_namespace_2';
-
       setUp(() {
         i18next = I18Next(
           locale,
@@ -262,6 +262,105 @@ void main() {
         expect(i18next.t('key'), 'fallbackValue1');
         expect(i18next.t('$namespace:key'), 'value');
       });
+    });
+
+    test('given fallback language', () {
+      i18next = I18Next(
+        locale,
+        resourceStore,
+        options: const I18NextOptions(fallbackLanguages: [french]),
+      );
+
+      mockKey('key', 'original value');
+      mockKey('key', 'french value', locale: french);
+      mockKey('other.key', 'french value', locale: french);
+
+      expect(i18next.t('$namespace:key'), 'original value');
+      expect(i18next.t('$namespace:other.key'), 'french value');
+    });
+
+    test('given fallback languages', () {
+      i18next = I18Next(
+        locale,
+        resourceStore,
+        options: const I18NextOptions(fallbackLanguages: [french, german]),
+      );
+
+      mockKey('french.key', 'french value', locale: french);
+      mockKey('german.key', 'german value', locale: german);
+
+      expect(i18next.t('$namespace:french.key'), 'french value');
+      expect(i18next.t('$namespace:german.key'), 'german value');
+    });
+
+    test('given fallback language but key is still missing', () {
+      i18next = I18Next(
+        locale,
+        resourceStore,
+        options: const I18NextOptions(fallbackLanguages: [french, german]),
+      );
+
+      expect(i18next.t('$namespace:unknown.key'), '$namespace:unknown.key');
+    });
+
+    test('given fallback language and namespace', () {
+      i18next = I18Next(
+        locale,
+        resourceStore,
+        options: I18NextOptions(
+          fallbackNamespaces: [fallbackNamespace1, fallbackNamespace2],
+          fallbackLanguages: [french, german],
+          missingKeyHandler: expectAsync4(
+            (locale, key, variables, options) => fail('Should not be called'),
+            count: 0,
+          ),
+        ),
+      );
+
+      mockKey('key', 'original value', ns: namespace);
+      mockKey('key', 'fallbackValue1', ns: fallbackNamespace1);
+      mockKey('key', 'fallbackValue2', ns: fallbackNamespace2);
+      mockKey('french.key', 'french value', ns: namespace, locale: french);
+      mockKey(
+        'french.key',
+        'french fallback 1',
+        ns: fallbackNamespace1,
+        locale: french,
+      );
+      mockKey('german.key', 'german value', ns: namespace, locale: german);
+      mockKey(
+        'german.key',
+        'german fallback 2',
+        ns: fallbackNamespace2,
+        locale: german,
+      );
+
+      expect(i18next.t('$namespace:key'), 'original value');
+      expect(i18next.t('$fallbackNamespace1:key'), 'fallbackValue1');
+      expect(i18next.t('$fallbackNamespace2:key'), 'fallbackValue2');
+
+      expect(i18next.t('$namespace:french.key'), 'french value');
+      expect(i18next.t('$fallbackNamespace1:french.key'), 'french fallback 1');
+
+      expect(i18next.t('$namespace:german.key'), 'german value');
+      expect(i18next.t('$fallbackNamespace2:german.key'), 'german fallback 2');
+    });
+
+    test('when no fallback finds a key', () {
+      i18next = I18Next(
+        locale,
+        resourceStore,
+        options: I18NextOptions(
+          fallbackNamespaces: [fallbackNamespace1, fallbackNamespace2],
+          fallbackLanguages: [french, german],
+          missingKeyHandler: expectAsync4(
+            (locale, key, variables, options) => 'final fallback',
+            count: 1,
+          ),
+        ),
+      );
+
+      expect(i18next.t('$namespace:key'), 'final fallback');
     });
   });
 
