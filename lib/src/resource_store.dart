@@ -10,8 +10,8 @@ import 'options.dart';
 /// The access is done by [Locale], Namespace, and key in that order.
 class ResourceStore {
   ResourceStore({Map<Locale, Map<String, dynamic>>? data})
-      : _data = data ?? {},
-        super();
+    : _data = data ?? {},
+      super();
 
   final Map<Locale, Map<String, dynamic>> _data;
 
@@ -67,11 +67,7 @@ class ResourceStore {
     I18NextOptions options,
   ) {
     final keySeparator = options.keySeparator ?? '.';
-    final path = <Object>[
-      locale,
-      namespace,
-      ...key.split(keySeparator),
-    ];
+    final path = <Object>[locale, namespace, ...key.split(keySeparator)];
     final value = evaluate(path, _data);
     return value is String ? value : null;
   }

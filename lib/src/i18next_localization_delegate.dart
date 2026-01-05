@@ -16,8 +16,8 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
     required this.dataSource,
     ResourceStore? resourceStore,
     this.options,
-  })  : resourceStore = resourceStore ?? ResourceStore(),
-        super();
+  }) : resourceStore = resourceStore ?? ResourceStore(),
+       super();
 
   /// The list of supported locales by this delegate.
   ///

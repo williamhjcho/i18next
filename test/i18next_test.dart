@@ -1,12 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/i18next.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'i18next_localization_delegate_test.mocks.dart';
+class MockResourceStore extends Mock implements ResourceStore {}
 
-@GenerateMocks([ResourceStore, LocalizationDataSource])
+class MockLocalizationDataSource extends Mock
+    implements LocalizationDataSource {}
+
 void main() {
   const namespace = 'local_namespace';
   const locale = Locale('en');
@@ -14,10 +15,17 @@ void main() {
   late I18Next i18next;
   late MockResourceStore resourceStore;
 
+  setUpAll(() {
+    registerFallbackValue(Locale('any'));
+    registerFallbackValue(I18NextOptions());
+  });
+
   setUp(() {
     resourceStore = MockResourceStore();
     i18next = I18Next(locale, resourceStore);
-    when(resourceStore.retrieve(any, any, any, any)).thenReturn(null);
+    when(
+      () => resourceStore.retrieve(any(), any(), any(), any()),
+    ).thenReturn(null);
   });
 
   void mockKey(
@@ -26,7 +34,9 @@ void main() {
     String ns = namespace,
     Locale locale = locale,
   }) {
-    when(resourceStore.retrieve(locale, ns, key, any)).thenReturn(answer);
+    when(
+      () => resourceStore.retrieve(locale, ns, key, any()),
+    ).thenReturn(answer);
   }
 
   group('given named namespaces', () {
@@ -37,20 +47,20 @@ void main() {
 
     test('given key for matching namespaces', () {
       expect(i18next.t('ns1:key'), 'My first value');
-      verify(resourceStore.retrieve(locale, 'ns1', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns1', 'key', any()));
 
       expect(i18next.t('ns2:key'), 'My second value');
-      verify(resourceStore.retrieve(locale, 'ns2', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns2', 'key', any()));
     });
 
     test('given key for unmatching namespaces', () {
       expect(i18next.t('ns3:key'), 'ns3:key');
-      verify(resourceStore.retrieve(locale, 'ns3', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns3', 'key', any()));
     });
 
     test('given key for partially matching namespaces', () {
       expect(i18next.t('ns:key'), 'ns:key');
-      verify(resourceStore.retrieve(locale, 'ns', 'key', any));
+      verify(() => resourceStore.retrieve(locale, 'ns', 'key', any()));
     });
   });
 
@@ -58,17 +68,23 @@ void main() {
     mockKey('key', 'My value', ns: 'ns');
 
     expect(i18next.t('ns:key'), 'My value');
-    verify(resourceStore.retrieve(locale, 'ns', 'key', any)).called(1);
+    verify(() => resourceStore.retrieve(locale, 'ns', 'key', any())).called(1);
   });
 
   test('given key without namespace', () {
-    when(resourceStore.retrieve(any, any, any, any)).thenReturn(null);
+    when(
+      () => resourceStore.retrieve(any(), any(), any(), any()),
+    ).thenReturn(null);
 
     expect(i18next.t('someKey'), 'someKey');
-    verify(resourceStore.retrieve(locale, '', 'someKey', any)).called(1);
+    verify(
+      () => resourceStore.retrieve(locale, '', 'someKey', any()),
+    ).called(1);
 
     expect(i18next.t('some.key'), 'some.key');
-    verify(resourceStore.retrieve(locale, '', 'some.key', any)).called(1);
+    verify(
+      () => resourceStore.retrieve(locale, '', 'some.key', any()),
+    ).called(1);
   });
 
   test('given an existing string key', () {
@@ -99,12 +115,9 @@ void main() {
     mockKey('key', 'my value', locale: anotherLocale);
 
     expect(i18next.t('$namespace:key', locale: anotherLocale), 'my value');
-    verify(resourceStore.retrieve(
-      anotherLocale,
-      namespace,
-      'key',
-      any,
-    )).called(1);
+    verify(
+      () => resourceStore.retrieve(anotherLocale, namespace, 'key', any()),
+    ).called(1);
   });
 
   group('given formatter', () {
@@ -175,20 +188,14 @@ void main() {
         resourceStore,
         options: I18NextOptions(
           formats: {
-            'format1': expectAsync4(
-              (value, options, loc, opt) {
-                values.add(value);
-                return value?.toString().toUpperCase();
-              },
-              count: 1,
-            ),
-            'format2': expectAsync4(
-              (value, options, loc, opt) {
-                values.add(value);
-                return value?.toString().toUpperCase();
-              },
-              count: 1,
-            ),
+            'format1': expectAsync4((value, options, loc, opt) {
+              values.add(value);
+              return value?.toString().toUpperCase();
+            }, count: 1),
+            'format2': expectAsync4((value, options, loc, opt) {
+              values.add(value);
+              return value?.toString().toUpperCase();
+            }, count: 1),
           },
         ),
       );
@@ -199,10 +206,10 @@ void main() {
       );
 
       expect(
-        i18next.t('$namespace:key', variables: {
-          'value1': '1eulav',
-          'value2': '2eulav',
-        }),
+        i18next.t(
+          '$namespace:key',
+          variables: {'value1': '1eulav', 'value2': '2eulav'},
+        ),
         'leading 1EULAV middle 2EULAV trailing',
       );
       expect(values, orderedEquals(<String>['1eulav', '2eulav']));
@@ -215,9 +222,7 @@ void main() {
       i18next = I18Next(
         locale,
         resourceStore,
-        options: const I18NextOptions(
-          fallbackNamespaces: [fallbackNamespace1],
-        ),
+        options: const I18NextOptions(fallbackNamespaces: [fallbackNamespace1]),
       );
 
       mockKey('key', 'fallbackValue', ns: fallbackNamespace1);
@@ -520,23 +525,25 @@ void main() {
 
     test('given all matching arguments', () {
       expect(
-        i18next.t('$namespace:key', variables: {
-          'first': 'fst',
-          'second': 'snd',
-          'third': 'trd',
-        }),
+        i18next.t(
+          '$namespace:key',
+          variables: {'first': 'fst', 'second': 'snd', 'third': 'trd'},
+        ),
         'fst, snd, and then trd!',
       );
     });
 
     test('given extra matching arguments', () {
       expect(
-        i18next.t('$namespace:key', variables: {
-          'first': 'fst',
-          'second': 'snd',
-          'third': 'trd',
-          'none': 'none',
-        }),
+        i18next.t(
+          '$namespace:key',
+          variables: {
+            'first': 'fst',
+            'second': 'snd',
+            'third': 'trd',
+            'none': 'none',
+          },
+        ),
         'fst, snd, and then trd!',
       );
     });
@@ -636,10 +643,14 @@ void main() {
     });
 
     test('nested pluralization and interpolation ', () {
-      mockKey('girlsAndBoys',
-          r'$t(girls, {"count": {{girls}} }) and {{count}} boy');
-      mockKey('girlsAndBoys_plural',
-          r'$t(girls, {"count": {{girls}} }) and {{count}} boys');
+      mockKey(
+        'girlsAndBoys',
+        r'$t(girls, {"count": {{girls}} }) and {{count}} boy',
+      );
+      mockKey(
+        'girlsAndBoys_plural',
+        r'$t(girls, {"count": {{girls}} }) and {{count}} boys',
+      );
       mockKey('girls', '{{count}} girl');
       mockKey('girls_plural', '{{count}} girls');
 
@@ -664,20 +675,17 @@ void main() {
       },
     );
 
-    test(
-      'given a failing nesting with custom translationFailedHandler',
-      () {
-        mockKey('key', r'This is my $t(anotherKey)');
-        const fallbackText = 'Fallback Text';
-        final options = I18NextOptions(
-          translationFailedHandler: expectAsync6(
-            (locale, namespace, key, variables, options, error) => fallbackText,
-            count: 1,
-          ),
-        );
-        expect(i18next.t('$namespace:key', options: options), fallbackText);
-      },
-    );
+    test('given a failing nesting with custom translationFailedHandler', () {
+      mockKey('key', r'This is my $t(anotherKey)');
+      const fallbackText = 'Fallback Text';
+      final options = I18NextOptions(
+        translationFailedHandler: expectAsync6(
+          (locale, namespace, key, variables, options, error) => fallbackText,
+          count: 1,
+        ),
+      );
+      expect(i18next.t('$namespace:key', options: options), fallbackText);
+    });
   });
 
   group('escape', () {
@@ -722,13 +730,17 @@ void main() {
     });
 
     test('when formatter returns xml', () {
-      final opts = I18NextOptions(formats: {
-        'fmt': (value, format, locale, options) => '<fmt>$value</fmt>',
-      });
+      final opts = I18NextOptions(
+        formats: {
+          'fmt': (value, format, locale, options) => '<fmt>$value</fmt>',
+        },
+      );
       mockKey('key', 'untagged text {{myVar, fmt}}');
       mockKey('keyTagged', '<tag attr="val">tagged text {{myVar, fmt}}</tag>');
       mockKey(
-          'keyEscaped', '<tag attr="val">tagged text {{- myVar, fmt}}</tag>');
+        'keyEscaped',
+        '<tag attr="val">tagged text {{- myVar, fmt}}</tag>',
+      );
 
       expect(
         i18next.t('$namespace:key', variables: vars, options: opts),
@@ -748,10 +760,12 @@ void main() {
   group('.of', () {
     BuildContext? capturedContext;
 
-    final builder = Builder(builder: (context) {
-      capturedContext = context;
-      return Container();
-    });
+    final builder = Builder(
+      builder: (context) {
+        capturedContext = context;
+        return Container();
+      },
+    );
 
     setUp(() {
       capturedContext = null;
@@ -764,19 +778,21 @@ void main() {
 
     testWidgets('when is registered in the widget tree', (tester) async {
       final dataSource = MockLocalizationDataSource();
-      when(dataSource.load(any)).thenAnswer((_) async => {});
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
-      await tester.pumpWidget(Localizations(
-        locale: locale,
-        delegates: [
-          DefaultWidgetsLocalizations.delegate,
-          I18NextLocalizationDelegate(
-            locales: [locale],
-            dataSource: dataSource,
-          ),
-        ],
-        child: builder,
-      ));
+      await tester.pumpWidget(
+        Localizations(
+          locale: locale,
+          delegates: [
+            DefaultWidgetsLocalizations.delegate,
+            I18NextLocalizationDelegate(
+              locales: [locale],
+              dataSource: dataSource,
+            ),
+          ],
+          child: builder,
+        ),
+      );
       await tester.pump();
       expect(I18Next.of(capturedContext!), isNotNull);
     });
@@ -888,39 +904,25 @@ void main() {
 
   group('tOrNull', () {
     test('when key is not found', () {
-      expect(
-        i18next.tOrNull('$namespace:key'),
-        isNull,
-      );
+      expect(i18next.tOrNull('$namespace:key'), isNull);
     });
     test('when namespace is wrong', () {
       mockKey('key', 'Translation', ns: namespace);
-      expect(
-        i18next.tOrNull('ns2:key'),
-        isNull,
-      );
+      expect(i18next.tOrNull('ns2:key'), isNull);
     });
     test('when key is found', () {
       mockKey('key', 'Translation', ns: namespace);
-      expect(
-        i18next.tOrNull('$namespace:key'),
-        'Translation',
-      );
+      expect(i18next.tOrNull('$namespace:key'), 'Translation');
     });
     test('when key is found in fallback namespace', () {
       const fallbackNamespace = 'fallback_namespace';
       i18next = I18Next(
         locale,
         resourceStore,
-        options: const I18NextOptions(
-          fallbackNamespaces: [fallbackNamespace],
-        ),
+        options: const I18NextOptions(fallbackNamespaces: [fallbackNamespace]),
       );
       mockKey('key', 'Translation', ns: fallbackNamespace);
-      expect(
-        i18next.tOrNull('$namespace:key'),
-        'Translation',
-      );
+      expect(i18next.tOrNull('$namespace:key'), 'Translation');
     });
   });
 }

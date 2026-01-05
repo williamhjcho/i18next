@@ -5,12 +5,13 @@ import 'src/formatter.dart' as formatter;
 import 'src/options.dart';
 import 'utils.dart';
 
-typedef Translate = String? Function(
-  String key,
-  Locale locale,
-  Map<String, dynamic> variables,
-  I18NextOptions options,
-);
+typedef Translate =
+    String? Function(
+      String key,
+      Locale locale,
+      Map<String, dynamic> variables,
+      I18NextOptions options,
+    );
 
 /// Exception thrown when the [interpolate] fails while processing
 /// for either not containing a variable or with malformed or
@@ -71,27 +72,33 @@ String interpolate(
 
   return todo.fold<String>(
     string,
-    (result, helper) => result.splitMapJoin(helper.pattern, onMatch: (match) {
-      var variable = match[1]!.trim();
+    (result, helper) => result.splitMapJoin(
+      helper.pattern,
+      onMatch: (match) {
+        var variable = match[1]!.trim();
 
-      Iterable<String> formats = [];
-      if (variable.contains(formatSeparator)) {
-        final variableParts = variable.split(formatSeparator);
-        variable = variableParts.first.trim();
-        formats = variableParts.skip(1).map((e) => e.trim());
-      }
+        Iterable<String> formats = [];
+        if (variable.contains(formatSeparator)) {
+          final variableParts = variable.split(formatSeparator);
+          variable = variableParts.first.trim();
+          formats = variableParts.skip(1).map((e) => e.trim());
+        }
 
-      if (variable.isEmpty) {
-        throw InterpolationException('Missing variable', match);
-      }
+        if (variable.isEmpty) {
+          throw InterpolationException('Missing variable', match);
+        }
 
-      final path = variable.split(keySeparator);
-      final value = evaluate(path, variables);
-      final formatted = formatter.format(value, formats, locale, options) ??
-          (throw InterpolationException(
-              'Could not evaluate or format variable', match));
-      return helper.escape(formatted);
-    }),
+        final path = variable.split(keySeparator);
+        final value = evaluate(path, variables);
+        final formatted =
+            formatter.format(value, formats, locale, options) ??
+            (throw InterpolationException(
+              'Could not evaluate or format variable',
+              match,
+            ));
+        return helper.escape(formatted);
+      },
+    ),
   );
 }
 
@@ -121,26 +128,29 @@ String nest(
   I18NextOptions options,
 ) {
   final pattern = nestingPattern(options);
-  return string.splitMapJoin(pattern, onMatch: (match) {
-    match = match as RegExpMatch;
-    final key = match.namedGroup('key');
-    if (key == null || key.isEmpty) {
-      throw NestingException('Key not found', match);
-    }
+  return string.splitMapJoin(
+    pattern,
+    onMatch: (match) {
+      match = match as RegExpMatch;
+      final key = match.namedGroup('key');
+      if (key == null || key.isEmpty) {
+        throw NestingException('Key not found', match);
+      }
 
-    var newVariables = variables;
-    final varsString = match.namedGroup('variables');
-    if (varsString != null && varsString.isNotEmpty) {
-      final Map<String, dynamic> decoded = jsonDecode(varsString);
-      newVariables = Map<String, dynamic>.of(variables)..addAll(decoded);
-    }
+      var newVariables = variables;
+      final varsString = match.namedGroup('variables');
+      if (varsString != null && varsString.isNotEmpty) {
+        final Map<String, dynamic> decoded = jsonDecode(varsString);
+        newVariables = Map<String, dynamic>.of(variables)..addAll(decoded);
+      }
 
-    final value = translate(key, locale, newVariables, options);
-    if (value == null) {
-      throw NestingException('Translation not found', match);
-    }
-    return value;
-  });
+      final value = translate(key, locale, newVariables, options);
+      if (value == null) {
+        throw NestingException('Translation not found', match);
+      }
+      return value;
+    },
+  );
 }
 
 RegExp interpolationPattern(I18NextOptions options) {

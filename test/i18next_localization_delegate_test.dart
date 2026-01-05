@@ -2,12 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:i18next/i18next.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 
-import 'i18next_localization_delegate_test.mocks.dart';
+class MockLocalizationDataSource extends Mock
+    implements LocalizationDataSource {}
 
-@GenerateMocks([LocalizationDataSource, ResourceStore])
+class MockResourceStore extends Mock implements ResourceStore {}
+
 void main() {
   const en = Locale('en'), enUS = Locale('en', 'US');
   const pt = Locale('pt'), ptBR = Locale('pt', 'BR');
@@ -16,6 +17,10 @@ void main() {
   late MockLocalizationDataSource dataSource;
   late MockResourceStore resourceStore;
   late I18NextLocalizationDelegate localizationDelegate;
+
+  setUpAll(() {
+    registerFallbackValue(Locale('any'));
+  });
 
   setUp(() {
     dataSource = MockLocalizationDataSource();
@@ -61,29 +66,29 @@ void main() {
 
   group('#load', () {
     test('given an exact matching locale', () async {
-      when(dataSource.load(any)).thenAnswer((_) async => {});
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await expectLater(localizationDelegate.load(en), completes);
-      verify(dataSource.load(en)).called(1);
+      verify(() => dataSource.load(en)).called(1);
     });
 
     test('given a language code matching locale', () async {
-      when(dataSource.load(any)).thenAnswer((_) async => {});
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await expectLater(localizationDelegate.load(enUS), completes);
-      verify(dataSource.load(en)).called(1);
+      verify(() => dataSource.load(en)).called(1);
     });
 
     test('given a non matching language code locale', () async {
-      when(dataSource.load(any)).thenAnswer((_) async => {});
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await expectLater(() => localizationDelegate.load(ar), throwsException);
-      verifyNever(dataSource.load(any));
+      verifyNever(() => dataSource.load(any()));
     });
 
     test('when dataSource errors', () async {
       const error = 'Some error';
-      when(dataSource.load(any)).thenAnswer((_) async => throw error);
+      when(() => dataSource.load(any())).thenAnswer((_) async => throw error);
 
       await expectLater(localizationDelegate.load(en), throwsA(error));
     });
@@ -91,28 +96,28 @@ void main() {
     test('when dataSource succeeds', () async {
       const data1 = <String, Object>{'key': 'ns1'};
       const data2 = <String, Object>{'key': 'ns1'};
-      when(dataSource.load(any)).thenAnswer(
-        (_) async => {'ns1': data1, 'ns2': data2},
-      );
+      when(
+        () => dataSource.load(any()),
+      ).thenAnswer((_) async => {'ns1': data1, 'ns2': data2});
 
       final i18next = await localizationDelegate.load(en);
       expect(i18next.locale, en);
-      verify(resourceStore.addNamespace(en, 'ns1', data1)).called(1);
-      verify(resourceStore.addNamespace(en, 'ns2', data2)).called(1);
+      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
+      verify(() => resourceStore.addNamespace(en, 'ns2', data2)).called(1);
     });
 
     test('when dataSource is synchronous', () {
       const data1 = <String, Object>{'key': 'ns1'};
-      when(dataSource.load(any)).thenAnswer(
-        (_) => SynchronousFuture({'ns1': data1}),
-      );
+      when(
+        () => dataSource.load(any()),
+      ).thenAnswer((_) => SynchronousFuture({'ns1': data1}));
 
       // checking if this is being called sync
       I18Next? result;
       localizationDelegate.load(en).then((value) => result = value);
       expect(result, isNotNull);
       expect(result!.locale, en);
-      verify(resourceStore.addNamespace(en, 'ns1', data1)).called(1);
+      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
     });
   });
 }

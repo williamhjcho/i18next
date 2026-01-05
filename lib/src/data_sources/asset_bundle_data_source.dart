@@ -13,8 +13,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
     this.bundlePath = 'localizations',
     AssetBundle? bundle,
     this.cache = true,
-  })  : bundle = bundle ?? rootBundle,
-        super();
+  }) : bundle = bundle ?? rootBundle;
 
   /// The path prefixed to the asset when retrieving from the [bundle].
   ///
@@ -50,16 +49,9 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   /// The end result is a [Map] that contains all the namespaces which are
   /// the file names themselves (case sensitive).
   @override
-  Future<Map<String, dynamic>> load(
-    Locale locale, {
-    String manifest = 'AssetManifest.json',
-  }) async {
-    assert(manifest.isNotEmpty);
-
-    final assetFiles = await bundle
-        .loadString(manifest, cache: cache)
-        .then<Map<String, dynamic>>((string) => json.decode(string))
-        .then((map) => map.keys);
+  Future<Map<String, dynamic>> load(Locale locale) async {
+    final assetManifest = await AssetManifest.loadFromAssetBundle(bundle);
+    final assetFiles = assetManifest.listAssets();
 
     /// On every platform you never should try to get the `path.separator`,
     /// because Flutter is fetching all assets in `/` style.
@@ -75,9 +67,7 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
     return await loadFromFiles(files);
   }
 
-  Future<Map<String, dynamic>> loadFromFiles(
-    Iterable<String> files,
-  ) async {
+  Future<Map<String, dynamic>> loadFromFiles(Iterable<String> files) async {
     // TODO: make it case insensitive?
     final namespaces = HashMap<String, dynamic>();
     for (final file in files) {
@@ -99,9 +89,5 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
           bundle == other.bundle;
 
   @override
-  int get hashCode => Object.hash(
-        bundlePath,
-        bundle,
-        cache,
-      );
+  int get hashCode => Object.hash(bundlePath, bundle, cache);
 }
