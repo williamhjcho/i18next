@@ -1,3 +1,9 @@
+# [0.8.0]
+
+- Bump support to flutter 3.38.x [PR](https://github.com/williamhjcho/i18next/pull/24)
+    - This means the min sdk constraints and dependencies are updated to support the current flutter stable (as of now).
+    - Special thanks for [PR #21](https://github.com/williamhjcho/i18next/pull/21) from @xalanq for bringing this up!
+
 # [0.7.3]
 
 - Don't schedule an extra microtask when loading a synchronous data source contents in `I18NextLocalizationDelegate`.
