@@ -1,3 +1,8 @@
+# [next version]
+
+- Adds optional `fallbackLanguages` to options to allow sequential language fallbacks.
+    - due to how asset loading works, all languages that were declared as fallback need to be loaded beforehand.
+
 # [0.8.0]
 
 - Bump support to flutter 3.38.x [PR](https://github.com/williamhjcho/i18next/pull/24)
