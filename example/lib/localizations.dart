@@ -37,3 +37,13 @@ class CounterL10n {
 
   String get resetCounter => i18next.t('counter:resetCounter');
 }
+
+class DevL10n {
+  const DevL10n(this.i18next);
+
+  final I18Next i18next;
+
+  static DevL10n of(BuildContext context) => DevL10n(I18Next.of(context)!);
+
+  String get key => i18next.t('all:key');
+}

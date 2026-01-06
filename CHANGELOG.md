@@ -1,3 +1,12 @@
+# [next version]
+
+- Adds optional `fallbackLocales` to options to allow sequential locale fallbacks.
+    - due to how asset loading works, all locales that were declared as fallback need to be loaded beforehand.
+- BREAKING: `AssetBundleLocalizationDataSource.bundlePath` is now required.
+    - if you were using the default, just pass `localizations` as the argument.
+- BREAKING: `LocalizationDataSource.load` now receives a list of locales, instead of a single locale.
+    - `AssetBundleLocalizationDataSource` now also tries to load files concurrently.
+
 # [0.8.0]
 
 - Bump support to flutter 3.38.x [PR](https://github.com/williamhjcho/i18next/pull/24)

@@ -69,14 +69,14 @@ void main() {
       when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await expectLater(localizationDelegate.load(en), completes);
-      verify(() => dataSource.load(en)).called(1);
+      verify(() => dataSource.load([en])).called(1);
     });
 
     test('given a language code matching locale', () async {
       when(() => dataSource.load(any())).thenAnswer((_) async => {});
 
       await expectLater(localizationDelegate.load(enUS), completes);
-      verify(() => dataSource.load(en)).called(1);
+      verify(() => dataSource.load([en])).called(1);
     });
 
     test('given a non matching language code locale', () async {
@@ -84,6 +84,20 @@ void main() {
 
       await expectLater(() => localizationDelegate.load(ar), throwsException);
       verifyNever(() => dataSource.load(any()));
+    });
+
+    test('given fallback locales', () async {
+      localizationDelegate = I18NextLocalizationDelegate(
+        locales: [en],
+        dataSource: dataSource,
+        resourceStore: resourceStore,
+        options: I18NextOptions(fallbackLocales: [ptBR]),
+      );
+      when(() => dataSource.load(any())).thenAnswer((_) async => {});
+
+      await expectLater(localizationDelegate.load(enUS), completes);
+      // loads locales that aren't marked in supported locales as well.
+      verify(() => dataSource.load([en, ptBR])).called(1);
     });
 
     test('when dataSource errors', () async {
@@ -96,28 +110,33 @@ void main() {
     test('when dataSource succeeds', () async {
       const data1 = <String, Object>{'key': 'ns1'};
       const data2 = <String, Object>{'key': 'ns1'};
-      when(
-        () => dataSource.load(any()),
-      ).thenAnswer((_) async => {'ns1': data1, 'ns2': data2});
+      when(() => dataSource.load(any())).thenAnswer(
+        (_) async => {
+          en: {'ns1': data1, 'ns2': data2},
+        },
+      );
 
       final i18next = await localizationDelegate.load(en);
       expect(i18next.locale, en);
-      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
-      verify(() => resourceStore.addNamespace(en, 'ns2', data2)).called(1);
+      verify(
+        () => resourceStore.addLocale(en, {'ns1': data1, 'ns2': data2}),
+      ).called(1);
     });
 
     test('when dataSource is synchronous', () {
       const data1 = <String, Object>{'key': 'ns1'};
-      when(
-        () => dataSource.load(any()),
-      ).thenAnswer((_) => SynchronousFuture({'ns1': data1}));
+      when(() => dataSource.load(any())).thenAnswer(
+        (_) => SynchronousFuture({
+          en: {'ns1': data1},
+        }),
+      );
 
       // checking if this is being called sync
       I18Next? result;
       localizationDelegate.load(en).then((value) => result = value);
       expect(result, isNotNull);
       expect(result!.locale, en);
-      verify(() => resourceStore.addNamespace(en, 'ns1', data1)).called(1);
+      verify(() => resourceStore.addLocale(en, {'ns1': data1})).called(1);
     });
   });
 }

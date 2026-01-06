@@ -51,7 +51,10 @@ class _MyAppState extends State<MyApp> {
             bundlePath: 'localizations',
           ),
           // extra formatting options can be added here
-          options: I18NextOptions(formats: formatters()),
+          options: I18NextOptions(
+            formats: formatters(),
+            fallbackLocales: [Locale('dev')],
+          ),
         ),
       ],
       home: MyHomePage(
@@ -106,6 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final theme = Theme.of(context);
     final homepageL10n = HomePageL10n.of(context);
     final counterL10n = CounterL10n.of(context);
+    final devL10n = DevL10n.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(homepageL10n.title)),
@@ -150,6 +154,8 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: resetCounter,
               child: Text(counterL10n.resetCounter),
             ),
+            const Divider(),
+            Text(devL10n.key, style: theme.textTheme.labelSmall),
           ],
         ),
       ),

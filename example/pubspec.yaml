@@ -30,3 +30,4 @@ flutter:
     # for now, we'll have to add them manually
     - localizations/en-US/
     - localizations/pt-BR/
+    - localizations/dev/

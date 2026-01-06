@@ -36,6 +36,11 @@ class ResourceStore {
     _data[locale]?.remove(namespace);
   }
 
+  void addLocale(Locale locale, Map<String, dynamic> namespaces) {
+    _data[locale] ??= {};
+    _data[locale]?.addAll(namespaces);
+  }
+
   /// Unregisters the [locale] from the store and from the [cache].
   Future<void> removeLocale(Locale locale) async {
     _data.remove(locale);

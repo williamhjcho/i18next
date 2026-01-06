@@ -73,32 +73,32 @@ class Translator {
       keys.add(tempKey += pluralSuffix);
     }
 
-    final namespaces = <String>[
-      namespace,
-      if (options.fallbackNamespaces != null) ...options.fallbackNamespaces!,
-    ];
+    final namespaces = <String>[namespace, ...?options.fallbackNamespaces];
+    final locales = <Locale>[locale, ...?options.fallbackLocales];
 
-    for (final currentNamespace in namespaces) {
-      for (final currentKey in keys.reversed) {
-        // TODO: translation context object
-        try {
-          final found = find(
-            locale,
-            currentNamespace,
-            currentKey,
-            variables,
-            options,
-          );
-          if (found != null) return found;
-        } catch (error) {
-          return options.translationFailedHandler?.call(
-            locale,
-            currentNamespace,
-            currentKey,
-            variables,
-            options,
-            error,
-          );
+    for (final locale in locales) {
+      for (final currentNamespace in namespaces) {
+        for (final currentKey in keys.reversed) {
+          // TODO: translation context object
+          try {
+            final found = find(
+              locale,
+              currentNamespace,
+              currentKey,
+              variables,
+              options,
+            );
+            if (found != null) return found;
+          } catch (error) {
+            return options.translationFailedHandler?.call(
+              locale,
+              currentNamespace,
+              currentKey,
+              variables,
+              options,
+              error,
+            );
+          }
         }
       }
     }

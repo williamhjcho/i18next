@@ -1,0 +1,17 @@
+[settings]
+lockfile = true
+
+[tools]
+flutter = "3.38.5"
+
+[tasks.setup]
+run = 'flutter pub get'
+
+[tasks.format]
+run = 'dart format --set-exit-if-changed .'
+
+[tasks.lint]
+run = "flutter analyze --no-pub ."
+
+[tasks.test]
+run = 'flutter test --no-pub --test-randomize-ordering-seed=random'
