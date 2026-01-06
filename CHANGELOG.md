@@ -1,4 +1,4 @@
-# [next version]
+# [0.9.0]
 
 - Adds optional `fallbackLocales` to options to allow sequential locale fallbacks.
     - due to how asset loading works, all locales that were declared as fallback need to be loaded beforehand.
