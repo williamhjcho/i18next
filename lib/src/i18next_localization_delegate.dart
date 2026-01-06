@@ -76,10 +76,10 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
   @override
   Future<I18Next> load(Locale locale) {
     locale = normalizeLocale(locale);
-    final languages = [locale, ...?options?.fallbackLanguages];
-    return dataSource.load(languages).then((loadedLanguages) {
+    final allLocales = [locale, ...?options?.fallbackLocales];
+    return dataSource.load(allLocales).then((loaded) {
       // TODO: should delete previous locales/namespaces from resource store?
-      for (final entry in loadedLanguages.entries) {
+      for (final entry in loaded.entries) {
         resourceStore.addLocale(entry.key, entry.value);
       }
       return I18Next(locale, resourceStore, options: options);

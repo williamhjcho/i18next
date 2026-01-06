@@ -264,11 +264,11 @@ void main() {
       });
     });
 
-    test('given fallback language', () {
+    test('given fallback locales', () {
       i18next = I18Next(
         locale,
         resourceStore,
-        options: const I18NextOptions(fallbackLanguages: [french]),
+        options: const I18NextOptions(fallbackLocales: [french]),
       );
 
       mockKey('key', 'original value');
@@ -279,11 +279,11 @@ void main() {
       expect(i18next.t('$namespace:other.key'), 'french value');
     });
 
-    test('given fallback languages', () {
+    test('given fallback localess', () {
       i18next = I18Next(
         locale,
         resourceStore,
-        options: const I18NextOptions(fallbackLanguages: [french, german]),
+        options: const I18NextOptions(fallbackLocales: [french, german]),
       );
 
       mockKey('french.key', 'french value', locale: french);
@@ -293,23 +293,23 @@ void main() {
       expect(i18next.t('$namespace:german.key'), 'german value');
     });
 
-    test('given fallback language but key is still missing', () {
+    test('given fallback locales but key is still missing', () {
       i18next = I18Next(
         locale,
         resourceStore,
-        options: const I18NextOptions(fallbackLanguages: [french, german]),
+        options: const I18NextOptions(fallbackLocales: [french, german]),
       );
 
       expect(i18next.t('$namespace:unknown.key'), '$namespace:unknown.key');
     });
 
-    test('given fallback language and namespace', () {
+    test('given fallback locales and namespace', () {
       i18next = I18Next(
         locale,
         resourceStore,
         options: I18NextOptions(
           fallbackNamespaces: [fallbackNamespace1, fallbackNamespace2],
-          fallbackLanguages: [french, german],
+          fallbackLocales: [french, german],
           missingKeyHandler: expectAsync4(
             (locale, key, variables, options) => fail('Should not be called'),
             count: 0,
@@ -352,7 +352,7 @@ void main() {
         resourceStore,
         options: I18NextOptions(
           fallbackNamespaces: [fallbackNamespace1, fallbackNamespace2],
-          fallbackLanguages: [french, german],
+          fallbackLocales: [french, german],
           missingKeyHandler: expectAsync4(
             (locale, key, variables, options) => 'final fallback',
             count: 1,

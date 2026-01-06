@@ -1,7 +1,7 @@
 # [next version]
 
-- Adds optional `fallbackLanguages` to options to allow sequential language fallbacks.
-    - due to how asset loading works, all languages that were declared as fallback need to be loaded beforehand.
+- Adds optional `fallbackLocales` to options to allow sequential locale fallbacks.
+    - due to how asset loading works, all locales that were declared as fallback need to be loaded beforehand.
 - BREAKING: `AssetBundleLocalizationDataSource.bundlePath` is now required.
     - if you were using the default, just pass `localizations` as the argument.
 - BREAKING: `LocalizationDataSource.load` now receives a list of locales, instead of a single locale.

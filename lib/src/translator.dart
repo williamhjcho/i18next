@@ -74,7 +74,7 @@ class Translator {
     }
 
     final namespaces = <String>[namespace, ...?options.fallbackNamespaces];
-    final locales = <Locale>[locale, ...?options.fallbackLanguages];
+    final locales = <Locale>[locale, ...?options.fallbackLocales];
 
     for (final locale in locales) {
       for (final currentNamespace in namespaces) {

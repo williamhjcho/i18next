@@ -53,7 +53,7 @@ class _MyAppState extends State<MyApp> {
           // extra formatting options can be added here
           options: I18NextOptions(
             formats: formatters(),
-            fallbackLanguages: [Locale('dev')],
+            fallbackLocales: [Locale('dev')],
           ),
         ),
       ],

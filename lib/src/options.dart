@@ -43,7 +43,7 @@ typedef EscapeHandler = String Function(String input);
 class I18NextOptions with Diagnosticable {
   const I18NextOptions({
     this.fallbackNamespaces,
-    this.fallbackLanguages,
+    this.fallbackLocales,
     this.namespaceSeparator,
     this.contextSeparator,
     this.pluralSeparator,
@@ -70,7 +70,7 @@ class I18NextOptions with Diagnosticable {
 
   static const I18NextOptions base = I18NextOptions(
     fallbackNamespaces: null,
-    fallbackLanguages: null,
+    fallbackLocales: null,
     namespaceSeparator: ':',
     contextSeparator: '_',
     pluralSeparator: '_',
@@ -102,17 +102,17 @@ class I18NextOptions with Diagnosticable {
   /// Defaults to null.
   final List<String>? fallbackNamespaces;
 
-  /// The languages that will be used to fallback when no key matches were found
-  /// in the current language.
-  /// These languages are evaluated in the order they are put in the list.
+  /// The locales that will be used to fallback when no key matches were found
+  /// in the current locale.
+  /// These locales are evaluated in the order they are put in the list.
   ///
-  /// [fallbackNamespaces] will take priority over language.
-  /// [missingKeyHandler] is called only after all languages have been evaluated.
+  /// [fallbackNamespaces] will take priority over locale.
+  /// [missingKeyHandler] is called only after all locales have been evaluated.
   ///
-  /// The fallback languages must be loaded with the primary language.
+  /// obs: the fallback locales must be loaded with the primary locale.
   ///
   /// Defaults to null.
-  final List<Locale>? fallbackLanguages;
+  final List<Locale>? fallbackLocales;
 
   /// The separator used when splitting the key.
   ///
@@ -251,7 +251,7 @@ class I18NextOptions with Diagnosticable {
     if (other == null) return this;
     return copyWith(
       fallbackNamespaces: other.fallbackNamespaces ?? fallbackNamespaces,
-      fallbackLanguages: other.fallbackLanguages ?? fallbackLanguages,
+      fallbackLocales: other.fallbackLocales ?? fallbackLocales,
       namespaceSeparator: other.namespaceSeparator ?? namespaceSeparator,
       contextSeparator: other.contextSeparator ?? contextSeparator,
       pluralSeparator: other.pluralSeparator ?? pluralSeparator,
@@ -289,7 +289,7 @@ class I18NextOptions with Diagnosticable {
   /// properties that aren't null.
   I18NextOptions copyWith({
     List<String>? fallbackNamespaces,
-    List<Locale>? fallbackLanguages,
+    List<Locale>? fallbackLocales,
     String? namespaceSeparator,
     String? contextSeparator,
     String? pluralSeparator,
@@ -315,7 +315,7 @@ class I18NextOptions with Diagnosticable {
   }) {
     return I18NextOptions(
       fallbackNamespaces: fallbackNamespaces ?? this.fallbackNamespaces,
-      fallbackLanguages: fallbackLanguages ?? this.fallbackLanguages,
+      fallbackLocales: fallbackLocales ?? this.fallbackLocales,
       namespaceSeparator: namespaceSeparator ?? this.namespaceSeparator,
       contextSeparator: contextSeparator ?? this.contextSeparator,
       pluralSeparator: pluralSeparator ?? this.pluralSeparator,
@@ -348,7 +348,7 @@ class I18NextOptions with Diagnosticable {
   @override
   int get hashCode => Object.hashAll([
     fallbackNamespaces,
-    fallbackLanguages,
+    fallbackLocales,
     namespaceSeparator,
     contextSeparator,
     pluralSeparator,
@@ -379,7 +379,7 @@ class I18NextOptions with Diagnosticable {
     return other.runtimeType == runtimeType &&
         other is I18NextOptions &&
         other.fallbackNamespaces == fallbackNamespaces &&
-        other.fallbackLanguages == fallbackLanguages &&
+        other.fallbackLocales == fallbackLocales &&
         other.namespaceSeparator == namespaceSeparator &&
         other.contextSeparator == contextSeparator &&
         other.pluralSeparator == pluralSeparator &&
@@ -407,7 +407,7 @@ class I18NextOptions with Diagnosticable {
     super.debugFillProperties(properties);
     properties
       ..add(IterableProperty('fallbackNamespaces', fallbackNamespaces))
-      ..add(IterableProperty('fallbackLanguages', fallbackLanguages))
+      ..add(IterableProperty('fallbackLocales', fallbackLocales))
       ..add(StringProperty('namespaceSeparator', namespaceSeparator))
       ..add(StringProperty('contextSeparator', contextSeparator))
       ..add(StringProperty('pluralSeparator', pluralSeparator))
