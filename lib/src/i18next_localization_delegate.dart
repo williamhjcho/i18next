@@ -76,28 +76,11 @@ class I18NextLocalizationDelegate extends LocalizationsDelegate<I18Next> {
   @override
   Future<I18Next> load(Locale locale) {
     locale = normalizeLocale(locale);
-
-    final fallbackLanguages = options?.fallbackLanguages;
-    final Future<List<(Locale, Map<String, dynamic>)>> futures;
-    if (fallbackLanguages != null && fallbackLanguages.isNotEmpty) {
-      futures = Future.wait(
-        [locale, ...fallbackLanguages].map(
-          (locale) => dataSource
-              .load(locale)
-              .then((namespaces) => (locale, namespaces)),
-        ),
-      );
-    } else {
-      // keep future chain sync if data source is also sync
-      futures = dataSource
-          .load(locale)
-          .then((namespaces) => [(locale, namespaces)]);
-    }
-
-    return futures.then((results) {
+    final languages = [locale, ...?options?.fallbackLanguages];
+    return dataSource.load(languages).then((loadedLanguages) {
       // TODO: should delete previous locales/namespaces from resource store?
-      for (final (locale, namespaces) in results) {
-        resourceStore.addLocale(locale, namespaces);
+      for (final entry in loadedLanguages.entries) {
+        resourceStore.addLocale(entry.key, entry.value);
       }
       return I18Next(locale, resourceStore, options: options);
     });

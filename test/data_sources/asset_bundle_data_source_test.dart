@@ -34,6 +34,8 @@ class MockAssetManifest implements AssetManifest {
 
 void main() {
   const bundlePath = 'bundle/path';
+  const anyLocale = Locale('any');
+  const enUS = Locale('en', 'US'), pt = Locale('pt');
   late MockAssetBundle bundle;
   late AssetBundleLocalizationDataSource dataSource;
 
@@ -59,11 +61,12 @@ void main() {
     });
 
     test('given any locale', () async {
-      await expectLater(dataSource.load(const Locale('any')), completes);
+      await expectLater(dataSource.load([anyLocale]), completes);
     });
 
     test('given an unregistered locale', () {
-      expect(dataSource.load(const Locale('ar')), completion(isEmpty));
+      const locale = Locale('ar');
+      expect(dataSource.load([locale]), completion({locale: {}}));
     });
 
     test('given a supported full locale', () async {
@@ -72,9 +75,11 @@ void main() {
       ).thenAnswer((_) async => '{}');
 
       await expectLater(
-        dataSource.load(const Locale('en', 'US')),
+        dataSource.load([enUS]),
         completion(
-          equals(<String, Map<String, Object>>{'file1': {}, 'file2': {}}),
+          equals({
+            enUS: {'file1': {}, 'file2': {}},
+          }),
         ),
       );
 
@@ -83,10 +88,8 @@ void main() {
     });
 
     test('given an unsupported long locale', () async {
-      await expectLater(
-        dataSource.load(const Locale('pt-BR')),
-        completion(isEmpty),
-      );
+      const ptBR = Locale('pt-BR');
+      await expectLater(dataSource.load([ptBR]), completion({ptBR: {}}));
 
       verifyNever(
         () => bundle.loadString(any(that: contains('$bundlePath/pt/'))),
@@ -103,11 +106,12 @@ void main() {
       when(
         () => bundle.loadString(any(that: contains('$bundlePath/'))),
       ).thenAnswer((_) async => '{}');
-
       await expectLater(
-        dataSource.load(const Locale('pt')),
+        dataSource.load([pt]),
         completion(
-          equals(<String, Map<String, Object>>{'file1': {}, 'file2': {}}),
+          equals({
+            pt: {'file1': {}, 'file2': {}},
+          }),
         ),
       );
 
@@ -119,10 +123,8 @@ void main() {
     });
 
     test('given an unsupported short locale', () async {
-      await expectLater(
-        dataSource.load(const Locale('ar')),
-        completion(isEmpty),
-      );
+      const locale = Locale('ar');
+      await expectLater(dataSource.load([locale]), completion({locale: {}}));
 
       verifyNever(
         () => bundle.loadString(any(that: contains('$bundlePath/ar/'))),
@@ -135,15 +137,56 @@ void main() {
       );
     });
 
+    test('given supported multiple locales', () async {
+      when(
+        () => bundle.loadString(any(that: contains('$bundlePath/'))),
+      ).thenAnswer((_) async => '{}');
+      await expectLater(
+        dataSource.load([enUS, pt]),
+        completion(
+          equals({
+            enUS: {'file1': {}, 'file2': {}},
+            pt: {'file1': {}, 'file2': {}},
+          }),
+        ),
+      );
+
+      verify(() => bundle.loadString('$bundlePath/en-US/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/en-US/file2.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/pt/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/pt/file2.json')).called(1);
+    });
+
+    test('given supported and unsupported multiple locales', () async {
+      when(
+        () => bundle.loadString(any(that: contains('$bundlePath/'))),
+      ).thenAnswer((_) async => '{}');
+      await expectLater(
+        dataSource.load([enUS, pt, anyLocale]),
+        completion(
+          equals({
+            enUS: {'file1': {}, 'file2': {}},
+            pt: {'file1': {}, 'file2': {}},
+            anyLocale: {},
+          }),
+        ),
+      );
+
+      verify(() => bundle.loadString('$bundlePath/en-US/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/en-US/file2.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/pt/file1.json')).called(1);
+      verify(() => bundle.loadString('$bundlePath/pt/file2.json')).called(1);
+    });
+
     test('when bundle errors', () async {
       const error = 'Some error';
       when(() => bundle.loadMock(any())).thenAnswer((_) async => throw error);
 
-      await expectLater(dataSource.load(const Locale('any')), throwsA(error));
+      await expectLater(dataSource.load([anyLocale]), throwsA(error));
     });
 
     test('given incorrect source-path to any bundle asset', () async {
-      await expectLater(dataSource.load(const Locale('any')), completes);
+      await expectLater(dataSource.load([anyLocale]), completes);
 
       verifyNever(() => bundle.loadString(any(that: contains('bundle\\path'))));
     });

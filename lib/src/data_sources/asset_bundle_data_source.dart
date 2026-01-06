@@ -30,55 +30,59 @@ class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   /// Defaults to `true`.
   final bool cache;
 
-  /// Loads all '.json' localization files declared in [manifest] with
-  /// [bundlePath] given a [locale]. The assets themselves must have been
-  /// previously declared in `pubspec.yaml`.
+  /// Loads all '.json' localization files declared in the bundle's asset
+  /// manfiest with [bundlePath] given the [locales].
+  /// The assets themselves must have been previously declared in `pubspec.yaml`.
   ///
   /// For example, if your project structure is as follows:
   ///
   /// ```
-  /// /app
-  ///   - l10n
-  ///     - en-US/localizations.json
-  ///     - pt-BR/localizations.json
+  /// /app/
+  ///   - l10n/
+  ///     - en-US/
+  ///         - common.json
+  ///         - feature_a.json
+  ///     - pt-BR/
+  ///         - common.json
+  ///         - feature_a.json
   /// ```
   ///
   /// Then the desired [bundlePath] should be `l10n`.
   ///
-  /// - [manifest] determines from where the namespaced files will be loaded
-  /// from. This file should contain a [Map] where the keys represent the
-  /// asset's path. Defaults to 'AssetManifest.json'.
-  ///
   /// The end result is a [Map] that contains all the namespaces which are
   /// the file names themselves (case sensitive).
   @override
-  Future<Map<String, dynamic>> load(Locale locale) async {
+  Future<Map<Locale, Map<String, dynamic>>> load(List<Locale> locales) async {
     final assetManifest = await AssetManifest.loadFromAssetBundle(bundle);
-    final assetFiles = assetManifest.listAssets();
+    final assetFiles = assetManifest
+        .listAssets()
+        .where((key) => path.extension(key) == '.json')
+        .toList();
 
-    /// On every platform you never should try to get the `path.separator`,
-    /// because Flutter is fetching all assets in `/` style.
-    /// `path.separator` should only be used to handle OS files.
-    final bundleLocalePath = '$bundlePath/${locale.toLanguageTag()}';
-
-    final files = assetFiles
-        // trailing slash is to guarantee the whole dir matches, otherwise
-        // it might allow undesired files
-        .where((key) => key.contains(bundleLocalePath))
-        .where((key) => path.extension(key) == '.json');
-
-    return await loadFromFiles(files);
+    final loadedLocales = <Locale, Map<String, dynamic>>{};
+    await Future.wait(
+      locales.map((locale) async {
+        /// On every platform you never should try to get the `path.separator`,
+        /// because Flutter is fetching all assets in `/` style.
+        /// `path.separator` should only be used to handle OS files.
+        final assetPath = '$bundlePath/${locale.toLanguageTag()}';
+        final localeAssetFiles = assetFiles.where((f) => f.contains(assetPath));
+        final namespaces = await loadFromFiles(localeAssetFiles);
+        loadedLocales[locale] = namespaces;
+      }),
+    );
+    return loadedLocales;
   }
 
   Future<Map<String, dynamic>> loadFromFiles(Iterable<String> files) async {
-    // TODO: make it case insensitive?
     final namespaces = HashMap<String, dynamic>();
-    for (final file in files) {
-      // TODO: make this a lazy eval and let loading be handed concurrently?
-      final namespace = path.basenameWithoutExtension(file);
-      final string = await bundle.loadString(file, cache: cache);
-      namespaces[namespace] = jsonDecode(string);
-    }
+    await Future.wait(
+      files.map((file) async {
+        final namespace = path.basenameWithoutExtension(file);
+        final string = await bundle.loadString(file, cache: cache);
+        namespaces[namespace] = jsonDecode(string);
+      }),
+    );
     return namespaces;
   }
 
