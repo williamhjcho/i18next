@@ -10,21 +10,24 @@ import 'localization_data_source.dart';
 /// A [LocalizationDataSource] that retrieves assets from an [AssetBundle].
 class AssetBundleLocalizationDataSource implements LocalizationDataSource {
   AssetBundleLocalizationDataSource({
-    this.bundlePath = 'localizations',
+    required this.bundlePath,
     AssetBundle? bundle,
     this.cache = true,
   }) : bundle = bundle ?? rootBundle;
 
   /// The path prefixed to the asset when retrieving from the [bundle].
   ///
-  /// Defaults to 'localizations'.
+  /// e.g. `l10n` if your assets are located in `l10n/en-US/feature.json`.
   final String bundlePath;
 
   /// The [AssetBundle] where it retrieves the assets from.
   ///
-  /// Defaults no [rootBundle].
+  /// Defaults to [rootBundle].
   final AssetBundle bundle;
 
+  /// Whether to cache the loaded assets from the [bundle].
+  ///
+  /// Defaults to `true`.
   final bool cache;
 
   /// Loads all '.json' localization files declared in [manifest] with
