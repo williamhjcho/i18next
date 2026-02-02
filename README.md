@@ -23,11 +23,12 @@ Mind that this is still a pre-1.0.0 so breaking changes may occur frequently.
 
 ## Usage
 
-Simply declare the package in your `pubspec.yaml`
+Simples way to add the latest version is to run `flutter pub add i18next`
+Or you can declare it directly into your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  i18next: ^0.5.0
+  i18next: ^0.9.0 # (or the latest version available)
 ```
 
 To use it with flutter's `LocalizationsDelegate` you first create `I18NextLocalizationDelegate` and register it in your `WidgetsApp` (`MaterialApp` or `CupertinoApp`).
