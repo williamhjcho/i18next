@@ -60,6 +60,7 @@ class I18NextOptions with Diagnosticable {
     this.nestingPrefix,
     this.nestingSuffix,
     this.nestingSeparator,
+    this.singularSuffix,
     this.pluralSuffix,
     this.missingKeyHandler,
     this.missingInterpolationHandler,
@@ -87,6 +88,7 @@ class I18NextOptions with Diagnosticable {
     nestingPrefix: r'$t(',
     nestingSuffix: ')',
     nestingSeparator: ',',
+    singularSuffix: 'singular',
     pluralSuffix: 'plural',
     missingKeyHandler: null,
     missingInterpolationHandler: null,
@@ -138,6 +140,18 @@ class I18NextOptions with Diagnosticable {
   /// Defaults to '.'.
   final String? keySeparator;
 
+  /// [singularSuffix] is used for the pluralization mechanism.
+  ///
+  /// Defaults to 'singular' and is used for simple pluralization rules.
+  ///
+  /// For example, in english where it only has singular or plural forms:
+  ///
+  /// ```
+  /// "friend_singular": "A friend"
+  /// "friend_plural": "{{count}} friends"
+  /// ```
+  final String? singularSuffix;
+
   /// [pluralSuffix] is used for the pluralization mechanism.
   ///
   /// Defaults to 'plural' and is used for simple pluralization rules.
@@ -145,7 +159,7 @@ class I18NextOptions with Diagnosticable {
   /// For example, in english where it only has singular or plural forms:
   ///
   /// ```
-  /// "friend": "A friend"
+  /// "friend_singular": "A friend"
   /// "friend_plural": "{{count}} friends"
   /// ```
   final String? pluralSuffix;
@@ -256,6 +270,7 @@ class I18NextOptions with Diagnosticable {
       contextSeparator: other.contextSeparator ?? contextSeparator,
       pluralSeparator: other.pluralSeparator ?? pluralSeparator,
       keySeparator: other.keySeparator ?? keySeparator,
+      singularSuffix: other.singularSuffix ?? singularSuffix,
       pluralSuffix: other.pluralSuffix ?? pluralSuffix,
       interpolationPrefix: other.interpolationPrefix ?? interpolationPrefix,
       interpolationSuffix: other.interpolationSuffix ?? interpolationSuffix,
@@ -294,6 +309,7 @@ class I18NextOptions with Diagnosticable {
     String? contextSeparator,
     String? pluralSeparator,
     String? keySeparator,
+    String? singularSuffix,
     String? pluralSuffix,
     String? interpolationPrefix,
     String? interpolationSuffix,
@@ -320,6 +336,7 @@ class I18NextOptions with Diagnosticable {
       contextSeparator: contextSeparator ?? this.contextSeparator,
       pluralSeparator: pluralSeparator ?? this.pluralSeparator,
       keySeparator: keySeparator ?? this.keySeparator,
+      singularSuffix: singularSuffix ?? this.singularSuffix,
       pluralSuffix: pluralSuffix ?? this.pluralSuffix,
       interpolationPrefix: interpolationPrefix ?? this.interpolationPrefix,
       interpolationSuffix: interpolationSuffix ?? this.interpolationSuffix,
@@ -365,6 +382,7 @@ class I18NextOptions with Diagnosticable {
     nestingPrefix,
     nestingSuffix,
     nestingSeparator,
+    singularSuffix,
     pluralSuffix,
     missingKeyHandler,
     missingInterpolationHandler,
@@ -394,6 +412,7 @@ class I18NextOptions with Diagnosticable {
         other.nestingPrefix == nestingPrefix &&
         other.nestingSuffix == nestingSuffix &&
         other.nestingSeparator == nestingSeparator &&
+        other.singularSuffix == singularSuffix &&
         other.pluralSuffix == pluralSuffix &&
         other.missingKeyHandler == missingKeyHandler &&
         other.missingInterpolationHandler == missingInterpolationHandler &&
@@ -422,6 +441,7 @@ class I18NextOptions with Diagnosticable {
       ..add(StringProperty('nestingPrefix', nestingPrefix))
       ..add(StringProperty('nestingSuffix', nestingSuffix))
       ..add(StringProperty('nestingSeparator', nestingSeparator))
+      ..add(StringProperty('singularSuffix', singularSuffix))
       ..add(StringProperty('pluralSuffix', pluralSuffix))
       ..add(StringProperty('missingKeyHandler', missingKeyHandler?.toString()))
       ..add(

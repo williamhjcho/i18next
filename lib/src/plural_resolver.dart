@@ -14,8 +14,15 @@ class PluralResolver {
     final separator = options.pluralSeparator ?? '_';
 
     if (_ruleUsesSimpleSuffixes(rule)) {
-      final suffix = options.pluralSuffix ?? 'plural';
-      return index == 0 ? '' : '$separator$suffix';
+      late final String suffix;
+
+      if (index == 0) {
+        suffix = options.singularSuffix ?? 'singular';
+      } else {
+        suffix = options.pluralSuffix ?? 'plural';
+      }
+
+      return suffix.isEmpty ? '' : '$separator$suffix';
     } else {
       return '$separator$index';
     }
