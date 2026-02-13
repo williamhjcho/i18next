@@ -18,8 +18,9 @@ Mind that this is still a pre-1.0.0 so breaking changes may occur frequently.
 - [x] Asset bundle localizations data source (retrieves from `pubspec.yaml`). See the example for more details.
 - [ ] Sprintf support
 - [ ] Resource caching
-- [ ] Retrieve resource files from server
 - [ ] Custom post-processing
+
+- [ ] ~Retrieve resource files from server~ (won't do, see https://github.com/williamhjcho/i18next/issues/27)
 
 ## Usage
 
